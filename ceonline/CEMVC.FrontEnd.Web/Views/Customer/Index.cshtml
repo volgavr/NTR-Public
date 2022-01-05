@@ -1,0 +1,715 @@
+﻿@using System.Globalization
+@section pageHeading {
+    <div class="container _lg ce-bg-primary ce-mb">
+        <div class="ce-content-heading">Customer Manager</div>
+    </div>
+}
+@{
+    ViewBag.Title = new HtmlString("Customers &ndash; Clear Estimates");
+    ViewBag.PageName = "Customers";
+    Layout = "~/Views/Shared/_Layout.responsive.cshtml";
+    bool isProUser = DependencyResolver.Current.GetService<CEMVC.Core.BLL.Infrastructure.IUserSecurity>().IsPro();
+    var currentProject = WebHelper.GetCurrentProject();
+}
+@*<div class="alert alert-warning hidden" role="alert" id="customerPageRedesignedAlert">
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close" style="font-size:100%; font-weight: normal;">
+        <span aria-hidden="true" class="k-icon k-i-close-circle ce-icon ce-icon-md"></span><span class="hidden-xs"> Don't Show This Again</span>
+    </button>
+    We've redesigned the Customer page, <a href="https://help.clearestimates.com/en_US/customers/customers-page-overview" class="alert-link">Click Here to Learn More.</a><br />
+    If you don't like it, <a href="https://help.clearestimates.com/contact-us">please share your thoughts!</a> Everyone will be switched over to the new version on October 4th, 2021.
+</div>*@
+<div class="row">
+    <div class="col-md-4">
+        <form class="k-form" id="customerSearchForm">
+            <div class="d-flex k-align-items-center k-justify-content-between k-flex-nowrap ce-flex-gap" style="margin-bottom: 15px">
+                <span class="ce-label-wrap"><label class="ce-label-checkbox"><input type="checkbox" name="showArchivedCustomers" value="true" id="showArchivedCustomers_checkbox"><span class="glyphicon ce-checkmark ce-checkmark-w-b-r" aria-hidden="true"></span> Show Archived</label></span>
+                <button type="button" class="k-button ce-btn-icontext" id="createCustomerBtn"><span class="ce-icon ce-icon-md _left fas fa-plus-circle ce-icon-success"></span><span class="ce-text-nobr-ellipsis">New Customer</span></button>
+            </div>
+            <div class="k-form-field hidden-md hidden-lg ce-customer-search">
+                <span class="k-icon k-i-search"></span>
+                @(Html.Kendo().AutoComplete()
+                                  .Name("searchCustomer")
+                                  .DataTextField("Name")
+                                  .Filter("contains")
+                                  .MinLength(2)
+                                  .Placeholder("Tap here to search for Customers")
+                                  .Height(400)
+                                  .TemplateId("customer_search_item_template")
+                                  .FooterTemplate("Total <strong>#: instance.dataSource.total() #</strong> item(s) output")
+                                  .DataSource(source =>
+                                          {
+                                              source.Read(read =>
+                                              {
+                                                  read.Action("Search", "Customer").Data("customerSearchQueryData");
+                                              })
+                                              .ServerFiltering(true);
+                                          })
+                                  .Events(evt => evt.Select("customerSearchItemSelected").DataBound("customerSearchDataBound"))
+                )
+            </div>
+            <div class="k-form-field hidden-sm hidden-xs">
+                <div class="k-input-group position-relative">
+                    <input type="search" id="customerNameInput" name="customerName" class="k-textbox" placeholder="Tap here to search for Customers" autocomplete="off" />
+                    <span unselectable="on" class="k-icon k-clear-value k-i-close" title="clear" role="button" tabindex="-1" data-clear="customerNameInput"></span>
+                </div>
+            </div>
+            <div class="ce-label-wrap dropdown hidden-sm hidden-xs">
+                Sort by:
+                <span class="ce dropdown-toggle" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="customerSortSelect">
+                    Last @((bool)ViewBag.CustomerListOrderingByName ? "Name" : "Updated") <span class="caret"></span>
+                </span>
+                <ul class="ce dropdown-menu">
+                    <li class="@((bool)ViewBag.CustomerListOrderingByName ? null : "k-state-selected")"><label class="ce-clickable"><input type="radio" name="customerSort" class="_hidden" value="0" @((bool)ViewBag.CustomerListOrderingByName ? null : "checked")><span class="fas fa-history ce-icon-sm _left text-muted"></span> Last Updated</label></li>
+                    <li class="@((bool)ViewBag.CustomerListOrderingByName ? "k-state-selected" : null)"><label class="ce-clickable"><input type="radio" name="customerSort" class="_hidden" value="1" @((bool)ViewBag.CustomerListOrderingByName ? "checked" : null)><span class="fas fa-sort-alpha-down ce-icon-sm _left text-muted"></span> Last Name</label></li>
+                </ul>
+            </div>
+        </form>
+        <div class="hidden-sm hidden-xs">
+            @(Html.Kendo().Grid<CEMVC.FrontEnd.Web.Models.CustomerListViewModel>()
+                                                                            .Name("customer_list")
+                                                                            .Columns(columns =>
+                                                                            {
+                                                                                columns.Bound(c => c.IsCurrent).Sortable(true).Width(40);
+                                                                                columns.Bound(c => c.Name).Sortable(true);
+                                                                                columns.Bound(c => c.IsArch).Visible(false);
+                                                                                columns.Bound(c => c.ChangedAt).Sortable(true).Width(40);
+                                                                            })
+                                                                            .ClientRowTemplate(
+        "<tr data-uid='#: uid #'>" +
+            "<td class='_head'><span class=\"ce-icon fas fa-user _light _primary\"></span></td>" +
+            "<td>" +
+                "# if(data.IsArch) {#<span class='k-badge k-badge-solid k-badge-primary k-badge-md k-badge-rounded pull-right'>Archived</span> #} #" +
+                "<span class='_name ce-webkit-box-2-lines'>#= k_CustomerTitle(data) #</span>" +
+                "# if(data.Address) {#<div class='_address text-muted ce-text-nobr-ellipsis'> #: Address#</div> #} #" +
+            "</td>" +
+            "<td class='_tail'>"+
+                "<span class=\"k-icon k-i-arrow-chevron-right _icn-md\"></span>" +
+            "</td>" +
+         "</tr>"
+                                                                           )
+                                                                            .HtmlAttributes(new { @class = "ce-customer-list" })
+                                                                            .Scrollable(sc => sc.Virtual(true).Height(500))
+                                                                            .Selectable(s => s.Mode(GridSelectionMode.Single).Type(GridSelectionType.Row))
+                                                                            .PersistSelection(true)
+                                                                            .AutoBind(false)
+                                                                            //.Filterable()
+                                                                            .Sortable(sort => sort.SortMode(GridSortMode.MultipleColumn))
+                                                                            .NoRecords("No Customers Found")
+                                                                            .Events(ev => ev.DataBound("customerListLoaded").Change("customerSelected"))
+                                                                                            .DataSource(ds => ds
+                                                                                                .Ajax()
+                                                                                                .Model(model =>
+                                                                                                {
+                                                                                                    model.Id(f => f.Id);
+                                                                                                })
+                                                                                                .Read(read => read.Action("List", "Customer").Data("customerListQueryData"))
+                                                                                                .ServerOperation(true)
+                                                                                                .PageSize(30)
+                                                                                                .Sort(sort =>
+                                                                                                {
+                                                                                                    sort.Add(c => c.IsCurrent).Descending();
+                                                                                                    if ((bool)ViewBag.CustomerListOrderingByName)
+                                                                                                        sort.Add(c => c.PrimaryLastName).Ascending();
+                                                                                                    else
+                                                                                                        sort.Add(c => c.ChangedAt).Descending();
+                                                                                                })
+                                                                                            )
+            )
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="panel panel-default position-relative ce-customer-edit collapse" id="customerEditWidget">
+            <div class="panel-heading">
+                <h3 class="panel-title">Customer Data</h3>
+            </div>
+            <div class="panel-body" id="customerEdit"></div>
+            <div class="panel-footer k-form-footer text-right">
+                <button type="button" class="k-button ce-btn-icon _left" role="button" data-type="cancel" onclick="toggleCustomerViewEdit(false)"><span class="k-icon k-i-close-circle ce-text-caution _icn-md"></span>&nbsp; Cancel</button>
+                <button type="submit" class="k-button ce-btn-icon _left" role="button" data-type="submit"><span class="k-icon k-i-check-circle _icn-md _continue"></span>&nbsp; Save Changes</button>
+            </div>
+        </div>
+        <div class="panel panel-info position-relative ce-customer-details collapse" id="customerDetails"></div>
+    </div>
+</div>
+
+<script type="text/x-kendo-tmpl" id="customer_search_item_template">
+    <span class="_name">#:Name#</span> # if(data.IsArch) {#
+    <span class="k-badge k-badge-solid k-badge-primary k-badge-md k-badge-rounded">Archived</span> #}#
+    # if(data.Address) {#
+    <div class="_address text-muted">#: data.Address #</div> #}#
+</script>
+<script>
+    function k_CustomerTitle(data) {
+        var sName = $.trim((data['SecondaryFirstName'] || '') + ' ' + (data['SecondaryLastName'] || ''));
+        return $.trim((data['PrimaryFirstName'] || '') + ' ' + (data['PrimaryLastName'] || '')) + (sName ? ' & ' : '') + sName;
+    }
+
+    function getCustomerId() {
+        var id = $('#CustomerViewModel_Id').val();
+        if (!id)
+            throw Error('getCustomerId(): Id not found');
+        return id;
+    }
+
+    function getCustomerEditId() {
+        var id = $('#customerEditForm input[name=Id]').val();
+        if (!id)
+            throw Error('getCustomerEditId(): Id not found');
+        return id;
+    }
+
+    function customerListQueryData() {
+        return {
+            showArchived: $('#showArchivedCustomers_checkbox').prop('checked'),
+            customerName: $('#customerNameInput').val() || null
+        }
+    }
+
+    function customerSearchQueryData() {
+        return {
+            showArchived: $('#showArchivedCustomers_checkbox').prop('checked'),
+            customerName: $('#searchCustomer').val() || null
+        }
+    }
+
+    function customerListLoaded(e) {
+        var listview = e.sender;
+        if (listview.items().length == 0)
+            return;
+
+        if (listview.options.scrollable == 'endless') {
+            var enableScroll = listview.dataSource.total() > 8;
+            listview.wrapper.css('overflow-y', enableScroll ? 'scroll' : 'auto');
+        }
+
+    }
+
+    function customerSelected(e) {
+        // get ListView selection
+        var selectedRows = e.sender.select();
+
+        if (selectedRows.length) {
+            try {
+                var dataItem = this.dataItem(selectedRows[0]);
+                e.sender._selectedIds = {};
+                e.sender._selectedIds[dataItem.Id] = true;
+            }
+            catch (error) {
+                return;
+            }
+
+            toggleCustomerViewEdit(false);
+            $.get('@Url.Action("Details")', { id: dataItem.Id }, customerDataLoaded)
+            .fail(function () {
+                kendo.ui.progress($('#customerDetails'), false);
+            });
+        }
+    }
+
+    function customerSearchItemSelected(e) {
+        var dataItem = this.dataItem(e.item.index());
+        if (dataItem.Id > 0) {
+            toggleCustomerViewEdit(false);
+            customerViewLoad(dataItem.Id);
+        }
+    }
+
+    function customerSearchDataBound(e) {
+        var offset = e.sender.element.length ? $(e.sender.element[0]).offset() : null;
+        var animationContainer = $(".k-animation-container").last();
+        if (animationContainer.length && offset)
+            animationContainer.css('left', (offset.left - 1) + 'px');
+    }
+
+    function customerListRestoreSelection(e) {
+        var listview = e.sender;
+        var items = listview.items();
+        var idToSelect = e.data.id;
+        if (idToSelect)
+            items.each(function (idx, row) {
+                var idValue = listview.dataSource.getByUid(row.dataset.uid).get('id');
+                $(row).toggleClass("k-state-selected", idToSelect == idValue);
+            });
+    }
+
+    function customerProjectListData() {
+        return {
+            customerId: $('#CustomerViewModel_Id').val(),
+            showArchived: $('#customerDetails input[name=showArchivedProjects]').prop('checked')
+        };
+    }
+
+    function customerProjectListDataBound(e) {
+        var gridWrapper = e.sender.wrapper;
+        var gridTable = e.sender.table;
+        var gridContent = gridTable.closest(".k-grid-content");
+        var hideScroll = gridTable[0].offsetHeight < gridContent[0].offsetHeight;
+        if ($('#customer_list').is(':visible') == false) {
+            gridWrapper.toggleClass("no-scrollbar", hideScroll);
+            if (hideScroll) {
+                gridContent.css('height', 'auto');
+                gridWrapper.css('height', 'auto');
+            }
+        }
+
+        $('.k-grid-load', gridTable).on('click', customerProjectLoadClick);
+        $('.k-grid-copy', gridTable).on('click', customerProjectCopy);
+        $('.k-grid-archive', gridTable).on('click', customerProjectArchive);
+
+        @* add Archive label & disable archive button *@
+        this.tbody.find("tr[role='row']").each(function () {
+            var model = e.sender.dataItem(this);
+            if (model.IsArch)
+                $(this).find('td[data-field=Title]').append(' <span class=\"_archived k-badge k-badge-solid k-badge-primary k-badge-md k-badge-rounded\">Archived</span>' ).end()
+                    .find(".k-command-cell > .k-grid-archive").addClass("k-state-disabled");
+        });
+    }
+
+    function customerViewLoad(customerId) {
+        kendo.ui.progress($('#customerDetails'), true);
+        $.get('@Url.Action("Details")', { id: customerId }, customerDataLoaded)
+            .fail(function () {
+                kendo.ui.progress($('#customerDetails'), false);
+                $('#customerDetails').html('<div class="alert alert-danger" role="alert">Failed to Load Data</div>');
+            });
+    }
+
+    function customerDataLoaded(data) {
+        $('#customerDetails').attr('data-loaded', true)
+            .html(data)
+            .find('#createProjectBtn').on('click', function () {
+                var mdlg = $('#kendoModalDialog').data("kendoDialog");
+                if (mdlg) {
+                    mdlg.content('Please wait until operation completed. Page reloaded automatically');
+                    mdlg.open();
+                }
+            }).end()
+            .find('a#editCustomerLink').on('click',
+                function (e) {
+                    e.preventDefault();
+                    toggleCustomerViewEdit(true);
+                }
+            ).end()
+            .find('a#archiveCustomerLink').on('click', customerArchiveClick).end()
+            .find('a#sendCustomerToZapierLink').on('click', sendToZapierClick).end()
+            .find("#project_list tbody").on("click", "td[data-field]", customerProjectsGridCellClick).end()
+            .closest('.panel').fadeIn();
+    }
+
+    function customerListReload(e) {
+        var widget = $('#customer_list:visible'), grid = widget.data('kendoGrid');
+        if (grid) {
+            if (typeof e == 'string') {
+                //e is a selector here
+                grid.one('dataBound', function (evt) {
+                    grid.select(e);
+
+                });
+            }
+            grid.dataSource.page(1);
+        }
+    }
+
+    function customerListRefresh(dataItem) {
+        var listView = $('#customer_list:visible').data('kendoGrid');
+        if (listView) {
+            var currentDataItem = listView.dataSource.get(dataItem.Id);
+            if (currentDataItem) {
+                if (!dataItem.IsArch) {
+                    currentDataItem.set("PrimaryFirstName", dataItem.PrimaryFirstName);
+                    currentDataItem.set("PrimaryLastName", dataItem.PrimaryLastName);
+                    currentDataItem.set("SecondaryFirstName", dataItem.SecondaryFirstName);
+                    currentDataItem.set("SecondaryLastName", dataItem.SecondaryLastName);
+                    currentDataItem.set("Address", dataItem.Address);
+                }
+
+                currentDataItem.set("IsArch", dataItem.IsArch);
+                if (dataItem.ChangedAt != undefined)
+                    currentDataItem.set("ChangedAt", dataItem.ChangedAt);
+            }
+
+            listView.refresh();
+
+        }
+    }
+
+    function customerNameInputChange(e) {
+        var text = $(e.currentTarget).val() || '';
+        if (!text || $.trim(text).length >= 2)
+            customerListReload();
+    }
+
+    function customerListSortChange(e) {
+        $(this).closest('div.dropdown').find('span.dropdown-toggle').html($(this).parent('label').text() + ' <span class="caret"></span>');
+        $(this).closest('li').toggleClass('k-state-selected', true).siblings().toggleClass('k-state-selected', false);
+
+        var clw = $('#customer_list:visible'),
+            list = clw.length ? clw.data('kendoGrid') : null,
+            selectedValue = $(this).val();
+        if (list) {
+            var sort = list.dataSource.sort(),
+                newSort = selectedValue == 1 ? { field: "PrimaryLastName", dir: "asc" } : { field: "ChangedAt", dir: "desc" };
+
+            if (sort && sort.length > 1)
+                sort[1] = newSort;
+            else
+                (sort || [{ field: "IsCurrent", dir: "desc" }]).push(newSort);
+
+            list.dataSource.query({ sort: sort, page: 1, pageSize: list.dataSource.pageSize() || 30 });
+
+        }
+
+        $.post('@Url.Action("SettingsUpdate", "Customer")',
+            { customerListOrderingOption: selectedValue },
+            $.noop
+        );
+    }
+
+    function customerProjectListOptionsChange(e) {
+        var widget = $('#customerDetails .k-grid[data-role=grid]'), grid = widget.data('kendoGrid');
+        if (grid) {
+            fitGridScrollHeight(grid);
+            $('.k-scrollbar', widget).scrollTop(0);
+            grid.dataSource.page(1);
+        }
+    }
+
+    function fitGridScrollHeight(kGrid) {
+        if (!$('#customer_list').is(':visible'))@* only if customer list is hidden*@
+            kGrid.wrapper.height(340).toggleClass("no-scrollbar", true);
+
+    }
+
+    function customerProjectLoadClick(e) {
+        e.preventDefault();
+        var grid = $(this).closest('.k-grid').data('kendoGrid');
+        if (grid) {
+            var dataItem = grid.dataItem($(e.currentTarget).closest("tr"));
+            customerProjectLoad(dataItem.Id);
+        }
+    }
+
+    function customerProjectLoad(id) {
+        var mdlg = $('#kendoModalDialog').data("kendoDialog");
+        if (mdlg) {
+            mdlg.content('Please wait until operation completed. Page reloaded automatically');
+            mdlg.open();
+        }
+        $.post('@Url.Action("LoadProject", "Customer")',
+            { projectId: id },
+            function (data) {
+                if (data.id == id) {
+                    $("#currentProjectText").text(data.displayName);
+                    location.href = "@(Url.Action("Index", "Project"))";
+                } else {
+                    if (mdlg)
+                        mdlg.close();
+                    ce.notifyError("Something went wrong. Project was not loaded");
+                }
+            }
+        ).fail(function () {
+            if (mdlg)
+                mdlg.close();
+        });
+    }
+
+    function customerProjectCopy(e) {
+        e.preventDefault();
+        var grid = $(this).closest('.k-grid').data('kendoGrid');
+        if (grid) {
+            var dataItem = grid.dataItem($(e.currentTarget).closest("tr"));
+            kendo.ui.progress($('#customerDetails'), true);
+            $.post('@Url.Action("DuplicateProject", "Customer")',
+                {
+                    customerId: getCustomerId(),
+                    projectId: dataItem.Id
+                },
+                function (data) {
+                    if (data.success) {
+                        fitGridScrollHeight(grid);
+                        grid.dataSource.read();
+                    }
+                    else
+                        ce.notifyError("Something went wrong");
+                }
+            ).complete(function () {
+                kendo.ui.progress($('#customerDetails'), false);
+            });
+        }
+    }
+
+    function customerCreateClick(e) {
+        toggleCustomerViewEdit(true, true);
+    }
+
+    function customerSubmitClick(e) {
+        e.preventDefault();
+        var validator = $("#customerEditWidget form:first").kendoValidator().data("kendoValidator");
+
+        if (validator.validate()) {
+            kendo.ui.progress($('#customerEdit'), true);
+            $.post('@Url.Action("EditSave", "Customer")',
+                $('#customerEditWidget form:first').serialize(),
+                function (resp) {
+                    if (resp.success) {
+                        ce.notifySuccess("Customer Saved");
+                        if ($('#customerEditModel_Id').val() == '0')
+                            $('#customerEditModel_Id').val(resp.data['Id']);
+                        toggleCustomerViewEdit(false, true);
+                        //customerListRefresh(resp.data);
+                    }
+                    else
+                        ce.notifyError("Something went wrong. Customer not saved");
+                }
+            ).complete(function () {
+                kendo.ui.progress($('#customerEdit'), false);
+            }).fail(function () {
+                ce.notifyError("Something went wrong. Customer not saved");
+            });
+        }
+    }
+
+    function customerProjectArchive(e) {
+        e.preventDefault();
+        var grid = $(this).closest('.k-grid').data('kendoGrid');
+        if (grid) {
+            var dataItem = grid.dataItem($(e.currentTarget).closest("tr"));
+            if (confirm('Sure to archive the project?')) {
+                kendo.ui.progress($('#customerDetails'), true);
+                $.post('@Url.Action("ArchiveProject", "Customer")',
+                    { projectId: dataItem.Id },
+                    function (data) {
+                        if (data.success) {
+                            fitGridScrollHeight(grid);
+                            grid.dataSource.read();
+                        }
+                        else
+                            ce.notifyError("Something went wrong");
+                    }
+                ).complete(function () {
+                    kendo.ui.progress($('#customerDetails'), false);
+                });
+            }
+        }
+    }
+
+    function toggleCustomerViewEdit(mode, reload) {
+        if (mode && mode != 'view') {
+            $('#customerDetails').closest('.panel').hide();
+            $('#customerEditWidget').fadeIn();
+
+            kendo.ui.progress($('#customerEdit'), true);
+            $.get('@Url.Action("EditForm", "Customer")', reload ? null : { id: getCustomerId() }, function (resp) {
+                $('#customerEdit').html(resp);
+                $('#customerEdit').find('div[data-scope=contact_fieldset] .k-form-field:not(:visible)').each(function (n, el) {
+                    $(this).find('input').prop('disabled', true);
+                }).end().find('form').first().kendoValidator();
+
+            }).fail(function () {
+                kendo.ui.progress($('#customerEdit'), false);
+                $('#customerEdit').html('<div class="alert alert-danger" role="alert">Failed to Load Data</div>')
+                });
+            $('#createCustomerBtn').toggleClass('k-state-disabled', true);
+        }
+        else {
+            $('#customerEditWidget').hide();
+            if (reload) {
+                var id = $('#customerEditModel_Id').val();
+                if (id) {
+                    customerViewLoad(id);
+                }
+                else
+                    alert('Customer Id not found')
+            }
+
+            $('#customerDetails').closest('.panel').fadeIn();
+            $('#createCustomerBtn').toggleClass('k-state-disabled', false);
+        }
+    }
+
+    function customerGetArchived(e) {
+        if (!e.data.checked)
+            return;
+
+        var customerId = e.data.id;
+        if (!customerId) {
+            alert('Invalid Customer ID');
+            return;
+        }
+
+        kendo.ui.progress($('#customerDetails'), true);
+        $.ajax({
+            type: "POST",
+            url: '@Url.Action("Archive", "Customer")',
+            data: { id: customerId },
+            success: function (data) {
+                if (data.success) {
+                    //$('#customerDetails').addClass('k-state-disabled');
+                    ce.notifySuccess(data && data.message || "Customer moved to archive");
+                    customerViewLoad(customerId);
+                    customerListRefresh({ Id: customerId, IsArch: true, ChangedAt: new Date() });
+                } else
+                    ce.notifyError("Failed to archive customer");
+            }
+        }).complete(function () {
+            kendo.ui.progress($('#customerDetails'), false);
+        });
+    }
+
+    function customerArchiveClick(e) {
+        e.preventDefault();
+        showCustomPrompt("Are you sure you want to archive this customer?", "Confirmation required", "Archive Customer", { id: getCustomerId() }, customerGetArchived, "Continue");
+    }
+
+    function customerProjectsGridCellClick(e) {
+        var row = $(this).parent();
+        var grid = row.closest('.k-grid').getKendoGrid();
+        var currentItem = grid.dataItem(row);
+
+        if (currentItem)
+            customerProjectLoad(currentItem.Id);
+
+        e.stopPropagation();
+    }
+
+    function addContactClick(e) {
+        e.preventDefault();
+        var fieldsAvl = $(this).siblings('.k-form-field:not(:visible)');
+        var firstInvisible = fieldsAvl.first();
+        var scope = $(this).closest('div[data-scope=contact_fieldset]');
+        var label = '', label_text = '';
+        firstInvisible.find('a.dropdown-item[data-option-val]').each(function (n, el) {
+            if (!label && $('input[name$=Label][value=' + $(el).attr('data-option-val') + ']', scope).parent().is(':visible') == false) {
+                label = $(el).attr('data-option-val');
+                label_text = $(el).attr('data-option-label') || label;
+            }
+        });
+
+        firstInvisible.find('input[name$=Label]').val(label).end()
+            .find('a.dropdown-toggle').html(label_text + '<span class="k-icon k-i-arrow-s" role="presentation"></span>');
+
+        firstInvisible.toggleClass('collapse in', true).find('input').prop('disabled', false);
+        if (fieldsAvl.length <= 1)
+            $(this).addClass('hidden');
+    }
+@if(isProUser) { <text>
+    function sendToZapierClick(e) {
+        e.preventDefault();
+        if ($(this).attr('data-already-sent')) {
+            showCustomPrompt("You have already sent this customer to Zapier, are you sure you want to do it again?", "Confirmation required", null, { id: getCustomerId() }, sendToZapier, "Send Anyway");
+        }
+        else
+            sendToZapier({ id: getCustomerId() });
+    }
+
+    function sendToZapier(e) {
+        var customerId = e.data ? e.data.id : e.id;
+        if (customerId)
+            $.post(
+                "@Url.Action("SendToZapier", "Customer")",
+                {
+                    customerId: customerId
+                },
+                function (data) {
+                    if (data.success) {
+                        ce.notifySuccess("Customer Sent to Zapier");
+                        $('#sendCustomerToZapierLink').attr('data-already-sent', true).toggleClass('k-state-disabled');
+                    }
+                    else {
+                        ce.notifyError("Something went wrong. " + data.message);
+                    }
+                }
+            ).fail(function () { ce.notifyError("Something went wrong"); });
+        else
+            alert("Invalid customer Id");
+    } </text>} else { <text>
+
+    function sendToZapierClick(e) {
+        e.preventDefault();
+        showGetUpgradedToProDialog({ key: 'zapier', title: 'Zapier Integration' });
+    }
+ </text>}
+</script>
+@* Scripts moved here as IS *@
+<script type="text/javascript">
+    var apostrophe = "&#39;";
+    var customerNameInputChangeThrottled = kendo.throttle(customerNameInputChange, 600);
+
+    $(document).ready(function () {
+        //KissMetrics events
+        if (window._kmq) {
+            _kmq.push(['trackClick', '#createCustomerBtn', 'NEW_CUSTOMER']);
+            _kmq.push(['trackClick', '#createProjectBtn', 'NEW_PROJECT']);
+        }
+
+        //Site tour
+        tour = null;
+        $('#customerNameInput').on('input', customerNameInputChangeThrottled)
+            .on('focus', function (e) { $(this).parent('.k-input-group').toggleClass('k-state-active', true); })
+            .on('blur', function (e) { $(this).parent('.k-input-group').toggleClass('k-state-active', false); })
+            .parent('.k-input-group').on('mouseover', function (e) { $(this).toggleClass('k-state-hover', true); }).on('mouseout', function (e) { $(this).toggleClass('k-state-hover', false); })
+            .find('.k-clear-value').on('click', function (e) {
+                var target = $(this).attr('data-clear').length ? $('#' + $(this).attr('data-clear')) : $(this).siblings('input:text').first();
+                if (target.length && target.val())
+                     target.val('').trigger('input');
+            });
+        $("#createCustomerBtn").click(customerCreateClick);
+
+        $('#customerSearchForm').on('submit', function (e) {
+            e.preventDefault();
+        }).on('change', 'input[name=showArchivedCustomers]', customerListReload)
+          .on('change', 'input[name=customerSort]', customerListSortChange);
+
+        $("#customerDetails").on("click", "div.k-grid tbody tr>td[data-field]", function (e) {
+            //var rowElement = this;
+            var row = $(this).parent();
+            var grid = row.closest('.k-grid').getKendoGrid();
+            var currentItem = grid.dataItem(row);
+
+            if (currentItem)
+                customerProjectLoad(currentItem.Id);
+
+            e.stopPropagation();
+        });
+
+        $("#customerEditWidget").on('click', 'button:submit', customerSubmitClick)
+            .on('click', 'a#morePhonesBtn, a#moreEmailsBtn', addContactClick)
+            .on('show.bs.dropdown', '[data-scope=contact_label_toggle]', function () {
+                $(this).find('.dropdown-item').map(function (n, el) {
+                    var div = $(this).closest('div[data-scope=contact_fieldset]');
+                    $(this).parent().toggleClass('k-state-disabled', $('input[name$=Label][value=' + $(el).attr('data-option-val') + ']', div).parent().is(':visible'));
+                });
+            }).on('click', 'a.dropdown-item[data-field]', function (e) {
+                e.preventDefault();
+                $('#' + $(this).attr('data-option-for')).val($(this).attr('data-option-val')); @* value *@
+                $('#' + $(this).closest('ul.dropdown-menu').attr('aria-labelledby')).html(($(this).attr('data-option-label') || $(this).attr('data-option-val')) + '<span class="k-icon k-i-arrow-s" role="presentation"></span>'); @* text *@
+            });
+
+        $('.collapse').on('shown.bs.collapse', '#extraPhoneInputs, #extraEmailInputs', function (e) {
+            var btn = $(this).next('[data-toggle=collapse]');
+            btn.attr('data-text-collapse', btn.text()).html('<span class="k-icon k-i-arrow-n"></span> ' + btn.attr('data-text-expanded'));
+        }).on('hidden.bs.collapse', '#extraPhoneInputs, #extraEmailInputs', function (e) {
+            var btn = $(this).next('[data-toggle=collapse]');
+            btn.html('<span class="k-icon k-i-arrow-s"></span> ' + btn.attr('data-text-collapse'));
+        });
+@*
+        $('#customerPageRedesignedAlert').on('click', 'button[data-dismiss]', function () {
+            if (window.localStorage)
+                localStorage.setItem('customer-page-redesigned-dismiss', '1');
+        }).on('click', 'a[data-role=submit]', function () {
+            $.get('@Url.Action("CustomerDesignToggleQuery", "Metrics")', { getUpgraded: false }, $.noop);
+        });
+
+        if (!window.localStorage || !localStorage.getItem('customer-page-redesigned-dismiss')) {
+            $('#customerPageRedesignedAlert').removeClass('hidden');
+        }
+*@
+        @if (currentProject != null && currentProject.customer_id > 0)
+        { <text>
+        if ($('#customer_list').is(':visible') == false)
+            customerViewLoad(@currentProject.customer_id);
+        </text> }
+        customerListReload('tr:eq(0)');
+    });
+</script>
+@Html.WootricExt(User.Identity.Name, ViewData["userSignUpDate"] != null ? Convert.ToDateTime(ViewData["userSignUpDate"]).ToUnixTimestamp() : DateTime.UtcNow.AddMonths(-6).ToUnixTimestamp())

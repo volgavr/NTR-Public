@@ -1,0 +1,515 @@
+﻿@using CEMVC.FrontEnd.Web.Core.Utils;
+@{
+    bool isMobileView = Request.Browser.IsMobileDevice;
+    bool isAuthorized = Request.IsAuthenticated && User.Identity.IsAuthenticated;
+    bool isProVersion = isAuthorized && DependencyResolver.Current.GetService<CEMVC.Core.BLL.Infrastructure.IUserSecurity>().IsPro();
+    string userName = isAuthorized ? User.Identity.Name : "";
+
+    var currentProject = isAuthorized ? WebHelper.GetCurrentProject() : null;
+    var customerText = currentProject != null ? string.Format("{0}, {1}: {2}", currentProject.Customer.last_name, currentProject.Customer.first_name, currentProject.title) : null;
+    if (customerText != null && customerText.Length > 170)
+    {
+        customerText = customerText.Substring(0, 170) + "...";
+    }
+    //var refersion = ViewBag.ShowRefersion == "yes";
+    var intercom = Session[Constants.SESSION_USER_SUBSCRIPTION_INFO] as CEMVC.FrontEnd.Web.Core.Models.UserSubscription;
+}
+<!doctype html>
+<html class="_footer">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="icon" href="~/favicon.ico" type="image/x-icon">
+
+    <title>@ViewBag.Title</title>
+    <!-- Bootstrap CSS -->
+    <link href="~/Content/bootstrap.custom.min.css" rel="stylesheet" />
+    <!-- Custom styles for this template -->
+
+    <link href="~/Content/site-legacy.css" rel="stylesheet" />
+    <!-- Kendo CSS -->
+    <link href="~/Content/kendo/2019.2.514/kendo.common-bootstrap.min.css" rel="stylesheet" type="text/css" />
+    @*    <link href="~/Content/kendo/2019.2.514/kendo.bootstrap.min.css" rel="stylesheet" type="text/css" />*@
+    <link href="~/Content/kendo/2019.2.514/kendo.uniform.min.css" rel="stylesheet" type="text/css" />
+    <link href="~/Content/kendo/kendo.custom-tunes.uniform.css" rel="stylesheet" type="text/css" />
+    <link href="~/Content/jquery.toastmessage.css" rel="stylesheet" type="text/css" />
+    <link href="https://use.fontawesome.com/releases/v5.15.3/css/all.css" crossorigin="anonymous" rel="stylesheet" />
+    <link href="~/Content/Site.responsive.css" rel="stylesheet" />
+
+    <!-- jQuery first, then Bootstrap JS -->
+    <script src="~/Scripts/jquery-1.12.4.min.js"></script>
+    <script src="~/Scripts/jquery.unobtrusive-ajax.min.js"></script>
+    <script src="~/Scripts/jquery.validate.min.js"></script>
+    <script src="~/Scripts/jquery.validate.unobtrusive.min.js"></script>
+    <script src="~/Scripts/jquery.toastmessage.js"></script>
+    <script src="~/Scripts/bootstrap.min.js"></script>
+    <script src="~/Scripts/kendo/2019.2.514/kendo.all.min.js"></script>
+    <script src="~/Scripts/kendo/2019.2.514/kendo.aspnetmvc.min.js"></script>
+    <script src="~/Scripts/kendo/2019.2.514/cultures/kendo.culture.en-US.min.js"></script>
+    <script type="text/javascript">
+        kendo.culture("en-US");
+        $(document).ready(function () {
+            $.support.cors = true;
+            var continueSessionTimer = 900000;
+            setInterval(function ()
+            {
+                $.ajax({
+                    type: "GET",
+                    url: '@Url.Action("ContinueSession", "Auth")'
+                }).done(function (data)
+                {
+                    if (data !== "") {
+                        $("#loadingOverlay").html(data);
+                    }
+                });
+            }, continueSessionTimer)
+        });
+    </script>
+    <script src="/Scripts/Main.js"></script>
+    <script src="/Scripts/bootstrap-tour-standalone.min.js"></script>
+    @RenderSection("extraJS", required: false)
+    @*@if(refersion)
+        {
+            @Html.Partial("Partial/RefersionTracker")
+        }*@
+    <style>
+        .container.debug {
+            background-color: #d8ad8e;
+        }
+
+        .debug [class*="col"] {
+            outline: 1px dotted #ff6a00;
+        }
+
+        .ce div.debug {
+            outline: 1px dotted green
+        }
+    </style>
+</head>
+<body><header class="ce hidden-xs">
+    <div class="container _lg px-0">
+                <div class="clearfix ce-header-bg" style="border-right: 1px solid #e7e7e7">
+                    @if (ViewBag.PageName != "Login") { 
+                    <div class="pull-right">
+                        <div class="ce-tools-user">
+                            <span class="_wrap">
+                            @if (isAuthorized)
+                            {
+                                <span class="_cell"><a id="accountInfoLink" class="_name" href="@Url.Action("Index", "User")"><span class="k-icon k-i-arrow-s"></span>@userName</a></span><span class="_cell">
+                                @(Html.Kendo().Tooltip()
+                                    .For("#accountInfoLink")
+                                    .ContentTemplateId("accountInfoTemplate")
+                                    .Position(TooltipPosition.Bottom)
+                                    .Callout(false)
+                                    .Width(180)
+                                    .Height(64)
+                                    .AutoHide(true))
+                                <script id="accountInfoTemplate" type="text/x-kendo-template">
+                                    <div class="accountInfoMenu">
+                                        <div id="accountInfo" onclick="location.href='@Url.Action("", "User")'">Account Info</div>
+                                        <div id="changePassword" onclick="location.href='@Url.Action("ChangePassword", "Auth")'">Change Password</div>
+                                    </div>
+                                </script>
+                                @if (DependencyResolver.Current.GetService<CEMVC.Core.BLL.Infrastructure.IUserSecurity>().HasPriceUpdatePermission())
+                                {
+                                <a class="name" href="@System.Web.Configuration.WebConfigurationManager.AppSettings["PartsTemplatesObserverUrl"]">Manage</a>}
+                                    <a id="linkLogout" href="@Url.Action("LogOff", "Auth")" class="_logout">Log Out</a>
+                                </span> 
+                            }
+                            else
+                            { <span class="_cell lead"><i class="fas fa-sign-in-alt ce-text-caution ce-icon _icn-md"></i>&nbsp;<a id="linkLogout" href="@Url.Action("Login", "Auth")" class="ce-text-caution ce-text-bold">Log In</a>&nbsp;</span>}
+                            </span>
+                        </div>
+                    </div> }
+                    <div class="pull-left ce-logo">@if (isAuthorized)
+                    { <a class="ce-logo-link" href="@Url.Action("Index", "Home")"></a> } else { <span class="ce-logo-link"></span> }</div>
+                    <div class="pull-left ce-tools-special">@if (isAuthorized) {
+                        <div class="dropdown">
+                            <span class="dropdown-toggle _cell" role="button" id="toolsSpan" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Tools
+                            </span>
+                            <ul class="dropdown-menu" aria-labelledby="toolsSpan">
+                                <li><a href="javascript:exportToQuickBooksDialog()">Export To QuickBooks</a></li>
+                                <li><a href="javascript:exportPartsDialog()">Export Parts</a></li>
+                                <li><a href="javascript:importPartsDialog()">Import Parts</a></li>
+                            </ul>
+                        </div> }
+                        <div class="dropdown">
+                            <span class="dropdown-toggle _cell" role="button" id="supportSpan" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Support
+                            </span>
+                            <ul class="dropdown-menu" aria-labelledby="supportSpan">
+                                <li><a href="https://help.clearestimates.com" target="_blank">Support Information</a></li>
+                                <li><a href="https://help.clearestimates.com/videos" target="_blank">Tutorial Videos</a></li>
+                                <li><a href="https://help.clearestimates.com/webinars" target="_blank">Free Webinars</a></li>
+                                <li><a href="https://www.clearestimates.com/perks/" target="_blank">Member Perks</a></li>
+                            </ul>
+                        </div>
+                        @if (isAuthorized && !isProVersion)
+                        {
+                            <a href="@Url.Action("UpgradeToPro", "Auth")" class="k-button">Upgrade to&nbsp;<span class="ce-text-bold ce-text-caution">PRO</span></a>
+                        }
+                    </div>
+                </div>
+                <nav class="ce">
+                    <div class="pull-right ce-nav-line-1">@if (isAuthorized) {
+                        <ul role="menu" class="nav ce-nav clearfix _menu">
+                            <li><a role="menuitem" href="@Url.Action("Index", "Parts")" class="_icn _i-parts">Parts</a></li>
+                            <li><a role="menuitem" href="@Url.Action("Index", "Template")" class="_icn _i-templates">Templates</a></li>
+                            <li><a role="menuitem" href="@Url.Action("Index", "Options")" class="_icn _i-options">Options</a></li>
+                            <li><a role="menuitem" href="@Url.Action("Index", "ImportExport")" class="_icn _i-update">Update</a></li>
+                        </ul> }
+                    </div>@if(customerText != null) { 
+                    <div class="ce-head-user-proj">
+                        <span id="currentProjectText">@customerText</span>
+                    </div> } @if (isAuthorized) {
+                    <div class="pull-left ce-nav-line-2">
+                        <ul role="menu" class="nav ce-nav _menu">
+                            <li class="@(ViewBag.PageName == "Home" ? "active" : null)"><a role="menuitem" href="@Url.Action("Index", "Home")" class="_icn _i-home">Home</a></li>
+                            <li class="@(ViewBag.PageName == "Customers" ? "active" : null)"><a role="menuitem" href="@Url.Action("Index", "Customer")" class="_icn _i-customers">Customers</a></li>
+                            <li><a role="menuitem" href="@Url.Action("Index", "Project")" class="_icn _i-projects">Projects</a></li>
+                            <li><a role="menuitem" href="@Url.Action("Index", "Reports")" class="_icn _i-reports">Reports</a></li>
+                        </ul>
+                    </div> }
+                </nav>
+            </div>
+@RenderSection("pageHeading", required: false)
+ </header>
+    <!-- BS Navigation -->
+    <nav class="navbar navbar-default navbar-fixed-top visible-xs-block ce">
+        <div class="container-fluid">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">@if(isAuthorized) { 
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
+                        data-target="#ce-navbar-collapse-1" aria-expanded="false">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button> }
+                <a class="navbar-brand ce-logo-link-sm" href="@Url.Action("Index", "Home")"><img src="~/Images/ce-logo.png" class="img-responsive" alt="Clear-Estimates" /></a>
+            </div>@if (customerText != null) {
+            <div class="ce-navbar-title ce-text-bold ce-webkit-box-2-lines">@customerText</div> }
+            @if(isAuthorized) { 
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="ce-navbar-collapse-1">
+                <ul class="nav navbar-nav">
+                    <li class="@(ViewBag.PageName == "Home" ? "active" : null)"><a href="@(ViewBag.PageName == "Home" ? "#" : Url.Action("Index", "Home"))"><span class="glyphicon glyphicon-home"></span> Home <span class="sr-only">(current)</span></a></li>
+                    <li class="@(ViewBag.PageName == "Customers" ? "active" : null)"><a href="@(ViewBag.PageName == "Customers" ? "#" : Url.Action("Index", "Customer"))"><span class="k-icon k-i-tell-a-friend"></span> Customers</a></li>
+                    <li><a href="@Url.Action("Index", "Project")"><span class="glyphicon glyphicon-briefcase"></span> Projects</a></li>
+                    <li><a href="@Url.Action("Index", "Reports")"><span class="k-icon k-i-paste-plain-text"></span> Reports</a></li>
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a href="@Url.Action("Index", "Parts")"><span class="k-icon k-i-grid c-blue"></span> Parts</a></li>
+                    <li><a href="@Url.Action("Index", "Template")"><span class="k-icon k-i-dictionary-add c-blue"></span> Templates</a></li>
+                    <li><a href="@Url.Action("Index", "Options")"><span class="glyphicon glyphicon-check c-blue"></span> Options</a></li>
+                    <li><a href="@Url.Action("Index", "ImportExport")"><span class="k-icon k-i-refresh c-blue"></span> Update</a></li>
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><span class="k-icon k-i-page-properties"></span> Tools <span class="caret"></span></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="javascript:exportToQuickBooksDialog()">Export To QuickBooks</a></li>
+                            <li><a href="javascript:exportPartsDialog()">Export Parts</a></li>
+                            <li><a href="javascript:importPartsDialog()">Import Parts</a></li>
+                        </ul>
+                    </li>
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><span class="k-icon k-i-wrench"></span> Support <span class="caret"></span></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="https://help.clearestimates.com">Support Information</a></li>
+                            <li><a href="https://help.clearestimates.com/videos">Tutorial Videos</a></li>
+                            <li><a href="https://help.clearestimates.com/webinars">Free Webinars</a></li>
+                            <li><a href="https://www.clearestimates.com/perks/">Member Perks</a></li>
+                        </ul>
+                    </li>@if (isProVersion == false) {
+                        <li><a href="@Url.Action("UpgradeToPro", "Auth")"><span class="glyphicon glyphicon-asterisk _pro"></span> Upgrade to <span class="_pro">PRO</span></a></li>}                    
+                        <li><a href="@Url.Action("Index", "User")"><span class="glyphicon glyphicon-user"></span> @userName</a></li>
+                        <li><a href="@Url.Action("LogOff", "Auth")"><span class="glyphicon glyphicon-log-out c-orange"></span> Log Out</a></li>
+                </ul>
+            </div><!-- /.navbar-collapse --> }
+        </div><!-- /.container-fluid -->
+    </nav><!-- /.BS Navigation -->
+ <div class="container _lg">@RenderBody()</div>
+ <footer class="ce-footer">
+     <div class="container _lg _text">ClearEstimates Online</div>
+ </footer>
+    <script type="text/javascript">
+        $(document).ajaxError(function (event, jqxhr, settings, exception) {
+            if (jqxhr.status === 400) {
+                if (jqxhr.responseText != null && jqxhr.responseText.length > 0) {
+                    var res = $.parseJSON(jqxhr.responseText);
+                    if (res != null && res.message && res.message.length > 0)
+                        CEShowError(res.message);
+                }
+            }
+
+            if (jqxhr.status === 401) {
+                // unauthorized
+                window.location.href = '@Url.Action("Login", "Auth")';
+
+            }
+        });
+
+        $(document).ajaxComplete(function (event, jqxhr, settings, exception) {
+            if (jqxhr.status == 401) {
+                // unauthorized
+                window.location.href = '@Url.Action("Login", "Auth")';
+            }
+            if (jqxhr.status == 200 && jqxhr.responseText.indexOf("<script>window.location=") == 0) {
+                var script = jqxhr.responseText.replace(/<script>(.*)';<\/script>/, "$1"); // Remove tags
+                eval(script + '?ReturnUrl=' + encodeURIComponent(document.location.pathname) + '\''); // Execute javascript
+            }
+        });
+
+        var ce = new function () {
+            this.notifySuccess = function(text) {
+                var note = $('#kendoNotificationWidget').data("kendoNotification");
+                if (note)
+                    note.show(text, 'success');
+                else
+                    console.error('no #kendoNotificationWidget element found');
+            }
+
+            this.notifyError = function (text) {
+                var note = $('#kendoNotificationWidget').data("kendoNotification");
+                if (note)
+                    note.show(text, 'error');
+                else
+                    console.error('no #kendoNotificationWidget element found');
+            }
+
+            this.notificationHandler = function (e) {
+                if (e.sender.getNotifications().length == 1) {
+                    var container = e.element.parent(),
+                        cntWidth = container.width(),
+                        cntHeight = container.height(),
+                        totalW = $(window).width(),
+
+                        totalH = $(window).height(),
+
+                        posLeft = Math.floor(totalW / 2 - cntWidth / 2),
+                        posTop = Math.floor(0.05 * totalH - cntHeight / 2 + 40);
+
+                    container.css({ top: posTop, left: posLeft, bottom: 'auto', right: 'auto' });
+                }
+            };
+
+            this.appendUrlHash = function (hashWithoutSharp) {
+                if (typeof hashWithoutSharp !== 'string')
+                    throw Error('String expected');
+                if (window.history.replaceState)
+                    history.replaceState(null, document.title, location.pathname + location.search + '#' + hashWithoutSharp);
+                else
+                    window.location.hash = hashWithoutSharp;
+            }
+
+            this.clearUrlHash = function () {
+                if (window.history.replaceState) {
+                    history.replaceState(null, document.title, location.pathname + location.search);
+                } else {
+                    window.location.hash = '';
+                }
+            }
+
+            this.confirm = function (content, title) {
+                var dfd = new $.Deferred();
+                var result = false;
+
+                var kdlg = $('<div id="kendoConfirmDialog"></div>').appendTo('body').kendoDialog({
+                    width: "300px",
+                    title: title || "Confirmation Required",
+                    closable: false,
+                    modal: true,
+                    content: content || "",
+                    visible: false,
+                    actions: [
+                        { text: 'Cancel' },
+                        {
+                            text: 'Yes', primary: true, action: function (e) { result = true; },
+                        }
+                    ],
+                    close: function (e) {
+                        this.destroy();
+                        if (result)
+                            dfd.resolve(result);
+                        else dfd.reject();
+                    }
+                }).data('kendoDialog');
+                kdlg.center();
+                kdlg.open();
+
+                return dfd.promise();
+            } 
+        };
+
+    </script>
+    @if (intercom != null)
+    {
+        @Html.Partial("Partial/Subscription", intercom)
+    }
+ <script id="kendo_notif_success_template" type="text/x-kendo-tmpl">
+ <div class="ce-toast">
+     # if (data.title) {#
+     <div class="_header">#= title #</div> #}#
+     <div class="_body"><span class="k-icon k-i-check"></span>&nbsp; #= content #</div> 
+ </div>
+ </script>
+ <script id="kendo_notif_error_template" type="text/x-kendo-tmpl">  
+ <div class="ce-toast">
+     # if (data.title) {#
+     <div class="_header">#= title #</div> #}#
+     <div class="_body"><span class="k-icon k-i-x"></span>&nbsp; #= content #</div>
+ </div>
+ </script>
+@(Html.Kendo().Notification().Name("kendoNotificationWidget").Templates(t =>
+{
+    t.Add().Type("error").ClientTemplateID("kendo_notif_error_template");
+    t.Add().Type("success").ClientTemplateID("kendo_notif_success_template");
+}).AutoHideAfter(5000).Stacking(NotificationStackingSettings.Down).Events(ev => ev.Show("ce.notificationHandler"))
+)
+@(Html.Kendo().Dialog().Name("kendoModalDialog").Modal(m => m.PreventScroll(true)).Title(false).Visible(false).Closable(false))
+@if(isAuthorized)
+{
+ <div class="modal fade _scrollable" id="importExportDialog" tabindex="-1" role="dialog" aria-hidden="true">
+     <div class="ce modal-dialog" role="document">
+         <div class="modal-content">
+             <div class="modal-header k-window-titlebar k-dialog-titlebar k-header">
+                 <button type="button" class="k-button k-bare k-button-icon k-window-action pull-right" aria-label="Close" data-dismiss="modal"><span class="k-icon k-i-close"></span></button>
+                 <span class="k-window-title k-dialog-title">Export Parts</span>
+             </div>
+                 <div class="modal-body k-content">@* Content *@</div>
+                 <div class="modal-footer ce-footer-modal">
+                     <button type="button" class="k-button ce-btn-icon pull-left" role="button" data-dismiss="modal"><span class="k-icon k-i-close-circle ce-text-caution _icn-md _left"></span> Cancel</button>
+                     <button type="button" class="k-button ce-btn-icon" role="button" data-type="submit"><span class="k-icon k-i-check-circle _icn-md _continue _left"></span>Export</button>
+                 </div>
+         </div>
+     </div>
+ </div>
+ <div class="modal fade" id="importPartsDialog" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static">
+     <div class="modal-dialog modal-lg" role="document">
+         <div class="modal-content">
+             <div class="modal-header k-window-titlebar k-dialog-titlebar k-header">
+                 <button type="button" class="k-button k-bare k-button-icon k-window-action pull-right" aria-label="Close" data-dismiss="modal" tabindex="0"><span class="k-icon k-i-close"></span></button>
+                 <span class="k-window-title k-dialog-title">Import Parts</span>
+             </div>
+             <div class="modal-body k-content">@* Content *@</div>
+         </div>
+     </div>
+ </div>
+ <script>
+     $('#importExportDialog .modal-footer > button[data-type=submit]').on('click', function (e) {
+         $(this).closest('.modal-content').find('.modal-body form:first').submit();
+     });
+
+     function exportPartsDialog() {
+         var tmpl = $('#importExportDialog');
+         tmpl.toggleClass('_scrollable', false).toggleClass('_centered', true)
+             .find('.modal-dialog').toggleClass('_zooming', true).toggleClass('modal-lg', false)
+             .find('.modal-header>.k-window-title').text('Export Parts').end()
+             .find('.modal-body').html('<form action="@Url.Action("ExportParts", "ImportExport")" method="post"><h3>Welcome to Part Export Wizard</h3></form>').end()
+         tmpl.modal('show');
+     }
+
+     function exportToQuickBooksDialog() {
+         var tmpl = $('#importExportDialog');
+         tmpl.toggleClass('_scrollable', true).toggleClass('_centered', false)
+             .find('.modal-dialog').toggleClass('modal-lg', true).toggleClass('_zooming', false)
+             .find('.modal-header>.k-window-title').text('Export to QuickBooks');
+
+         $.get('@Url.Action("ExportToQuickBooks", "ImportExport")', {}, function (resp) {
+             tmpl.find('form').attr('action', '@Url.Action("ExportToQb", "ImportExport")').end()
+                .find('.modal-body').html(resp);
+             tmpl.modal('show');
+         }).fail(function () {
+             tmpl.find('.modal-body').html('<div class="alert alert-danger">Error</div>');
+             tmpl.modal('show');
+         });
+     }
+
+     function importPartsDialog() {
+         var tmpl = $('#importPartsDialog');
+
+         $.get('@Url.Action("ImportPartsForm", "ImportExport")', {}, function (resp) {
+             tmpl.find('.modal-body').html(resp);
+             tmpl.modal('show');
+         }).fail(function () {
+             tmpl.find('.modal-body').html('<div class="alert alert-danger">Error</div>');
+             tmpl.modal('show');
+         });
+     }
+ </script>
+}
+@if (isAuthorized && !isProVersion)
+{
+ <div class="modal fade _centered" id="getUpgradedToProDialog" tabindex="-1" role="dialog" aria-hidden="true">
+     <div class="modal-dialog _zooming" role="document">
+         <div class="modal-content">
+             <div class="modal-header k-window-titlebar k-dialog-titlebar k-header">
+                 <button type="button" class="close pull-right" data-dismiss="modal" aria-label="Close" tabindex="0"><span aria-hidden="true">&times;</span></button>
+                 <span class="k-window-title k-dialog-title">Get Upgraded to PRO Version</span>
+             </div>
+             <div class="modal-body k-content">@* Content *@</div>
+             <div class="modal-footer ce-text-centered ce-footer-modal">
+                 <a class="btn btn-primary btn-lg _signup" href="@Url.Action("UpgradeToPro", "Auth", new { page = ViewBag.PageName })" role="button">Upgrade to PRO &raquo;</a>
+             </div>
+         </div>
+     </div>
+ </div>
+<script>
+    function showGetUpgradedToProDialog(options) {
+        var tmpl = $("#getUpgradedToProDialog");
+        if (tmpl.length) {
+            if (options && options.key) {
+                $.get("/Auth/GetUpgraded", { feature: options.key }, function (resp) {
+                    tmpl.find('.modal-body').html(resp);
+                    tmpl.modal('show');
+                });
+            }
+        }
+        console.warn('Element #getUpgradedToProDialog is not found on the page');
+    }
+</script>
+}
+<script>(function (h, o, t, j, a, r) { h.hj = h.hj || function () { (h.hj.q = h.hj.q || []).push(arguments) }; h._hjSettings = { hjid: 1228117, hjsv: 6 }; a = o.getElementsByTagName('head')[0]; r = o.createElement('script'); r.async = 1; r.src = t + h._hjSettings.hjid + j + h._hjSettings.hjsv; a.appendChild(r); })(window, document, 'https://static.hotjar.com/c/hotjar-', '.js?sv=');</script>
+<!-- KISSmetrics tracking snippet -->
+<script type="text/javascript">
+    var _kmq = _kmq || [];
+    function _kms(u) {
+        setTimeout(function () {
+            var d = document, f = d.getElementsByTagName('script')[0],
+                s = d.createElement('script');
+            s.type = 'text/javascript'; s.async = true; s.src = u;
+            f.parentNode.insertBefore(s, f);
+        }, 1);
+    }
+    loadKissmetrics = function () {
+        var _kmk = _kmk || '@System.Web.Configuration.WebConfigurationManager.AppSettings["KissMetricsApiKey"]';
+        _kms('//i.kissmetrics.com/i.js');
+        _kms('//scripts.kissmetrics.com/' + _kmk + '.2.js');
+    }
+
+    _kmq.push(['trackClick', '#linkLogout', 'SITE_LOGOUT']);
+</script>
+<!-- // KISSMETRICS WITH VERO-->
+<script type="text/javascript">
+
+        var _veroq = _veroq || [];
+        setTimeout(function () { if (typeof window.Semblance == "undefined") { console.log("Vero did not load in time."); for (var i = 0; i < _veroq.length; i++) { a = _veroq[i]; if (a.length == 3 && typeof a[2] == "function") a[2](null, false); } } }, 3000);
+
+        _veroq.push(['init', {
+            api_key: '@System.Web.Configuration.WebConfigurationManager.AppSettings["VeroApiKey"]'
+        }, function (vero, loaded) {
+            if (loaded)
+                window._kmq.splice(0, 0, vero.listeners.attach_to_kissmetrics);
+            loadKissmetrics();
+        }]);
+    (function () { var ve = document.createElement('script'); ve.type = 'text/javascript'; ve.async = true; ve.src = '//d3qxef4rp70elm.cloudfront.net/m.js'; var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ve, s); })();
+    @if(isAuthorized) {<text>
+        _veroq.push(['user', {
+            id:  '@User.Identity.Name',
+            email: '@User.Identity.Name'
+        }]);
+    </text>}
+</script>
+</body>
+</html>

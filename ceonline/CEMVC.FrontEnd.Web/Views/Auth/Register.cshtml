@@ -1,0 +1,66 @@
+﻿@model CEMVC.FrontEnd.Web.Models.Auth.RegisterModel
+@{
+    ViewBag.Title = "Register";
+    ViewBag.PageName = "Register";
+    Layout = "~/Views/Shared/_Layout.responsive.cshtml";
+}
+<script type="text/javascript">
+    $(document).ready(function () {
+        $("#formRegister").submit(function () {
+            if ($(this).valid()) {
+                $("#btnRegister").attr("disabled", "disabled").addClass("dsb_button");
+                $("#loadingOverlay").removeClass("hidden");
+            }
+        });
+    });
+</script>
+<div class="panel panel-default ce-sign-up">
+    <div class="panel-heading"><h2 class="_heading">Input the Credentials</h2></div>
+    <div class="panel-body">
+        @using (Html.BeginForm("Register", "Auth", FormMethod.Post, new { id = "formRegister", autocomplete = "false", @class="k-form" }))
+        {
+            @Html.AntiForgeryToken()
+            <div class="k-form-field">
+                @Html.LabelFor(model => model.Email, new { @class = "k-label" })
+                @Html.TextBoxFor(model => model.Email, new { @class = "k-textbox k-input" })
+                @Html.ValidationMessageFor(model => model.Email)
+            </div>
+            if (Model.ActKey == string.Empty || Model.ActKey == null)
+            {
+                <div class="k-form-field">
+                    @Html.LabelFor(model => model.ActKey, new { @class = "k-label" })
+                    @Html.TextBoxFor(model => model.ActKey, new { @class = "k-textbox k-input" })
+                    @Html.ValidationMessageFor(model => model.ActKey)
+                </div>
+
+            }
+            else
+            {
+                @Html.HiddenFor(model => model.ActKey)
+            }
+            <div class="k-form-field">
+                @Html.LabelFor(model => model.Password, new { @class = "k-label" })
+                @Html.PasswordFor(model => model.Password, new { @class = "k-textbox k-input" })
+                @Html.ValidationMessageFor(model => model.Password)
+            </div>
+            <div class="k-form-field">
+                @Html.LabelFor(model => model.ConfirmPassword, new { @class = "k-label" })
+                @Html.PasswordFor(model => model.ConfirmPassword, new { @class = "k-textbox k-input" })
+                @Html.ValidationMessageFor(model => model.ConfirmPassword)
+            </div>
+            <button class="btn btn-lg btn-block _signin" type="submit" value="Register" id="btnRegister"><span class="k-icon k-i-check-outline ce-icon _icn-md _left"></span>Register &nbsp;</button>
+            
+        }
+        @if (ViewData.ModelState.IsValid == false)
+        {
+            <div class="alert alert-danger validation-summary-errors">
+                <ul>
+                    @foreach (var error in ViewData.ModelState.Where(s => s.Value.Errors.Count != 0).SelectMany(s => s.Value.Errors))
+                    {
+                        <li>@error.ErrorMessage</li>
+                    }
+                </ul>
+            </div>
+        }
+    </div>
+</div>

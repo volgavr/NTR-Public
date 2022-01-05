@@ -1,0 +1,36 @@
+﻿@model CEMVC.FrontEnd.Web.Models.Common.UpgradeVersionSuggest
+
+@if (Model.Feature.Equals("zapier", StringComparison.CurrentCultureIgnoreCase))
+{
+    <h2><strong class="text-info">Zapier Integration</strong>  is a <strong class="ce-text-caution">PRO</strong> Feature</h2>
+    <h3 class="h4">With Zapier you can:</h3>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-4">
+                <div class="panel-body text-center hidden-xs"><span class="fa fa-4x fa-sync ce-text-primary"></span></div>
+                <div class="media d-xs-table">
+                    <div class="visible-xs media-left d-xs-table-cell"><span class="fa fa-2x fa-sync ce-text-primary"></span></div>
+                    <p class="h5 ce-text-bold media-body media-middle">Sync new Clear Estimates customers with your CRM</p>
+                </div>
+            </div>
+            <div class="col-sm-4">
+                <div class="panel-body text-center hidden-xs"><span class="fa fa-4x fa-envelope-open-text ce-text-primary"></span></div>
+                <div class="media d-xs-table">
+                    <div class="visible-xs media-left d-xs-table-cell"><span class="fa fa-2x fa-envelope-open-text ce-text-primary"></span></div>
+                    <p class="h5 ce-text-bold media-body media-middle">Automatically add customers to your email marketing tool</p>
+                </div>
+            </div>
+            <div class="col-sm-4">
+                <div class="panel-body text-center hidden-xs"><span class="fa fa-4x fa-user-check ce-text-primary"></span></div>
+                <div class="media d-xs-table">
+                    <div class="visible-xs media-left d-xs-table-cell"><span class="fa fa-2x fa-user-check ce-text-primary"></span></div>
+                    <p class="h5 ce-text-bold media-body media-middle">Create new Clear Estimates customers from any source</p>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+<div class="alert alert-info">Not Supported Feature: @Model.Feature </div>
+}

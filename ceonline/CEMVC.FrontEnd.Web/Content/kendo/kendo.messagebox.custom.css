@@ -1,0 +1,74 @@
+﻿.k-messagebox {
+    margin: 0 0 1em 0;
+    padding: 4px 8px;
+    border-width: 0 0 0 4px;
+    border-style: solid;
+    box-sizing: border-box;
+    font-size: 14px;
+    line-height: 1.4285714286;
+}
+
+    .k-messagebox a {
+        color: inherit;
+        text-decoration: underline;
+    }
+
+.k-messagebox-primary {
+    border-color: #ffd3d0;
+    color: #85332e;
+    background-color: #ffe0de;
+}
+
+.k-messagebox-secondary {
+    border-color: #d4d4d4;
+    color: #353535;
+    background-color: #e0e0e0;
+}
+
+.k-messagebox-tertiary {
+    border-color: #b8e7fc;
+    color: #02587f;
+    background-color: #cdeefd;
+}
+
+.k-messagebox-info {
+    border-color: #b8d0f9;
+    color: #002e79;
+    background-color: #ccdefb;
+}
+
+.k-messagebox-success {
+    border-color: #c7eab8;
+    color: #1d5e00;
+    background-color: #d7f0cc;
+}
+
+.k-messagebox-warning {
+    border-color: #ffedb8;
+    color: #856400;
+    background-color: #fff2cc;
+}
+
+.k-messagebox-error {
+    border-color: #fcbeb8;
+    color: #7e0c00;
+    background-color: #fdd1cc;
+}
+
+.k-messagebox-dark {
+    border-color: #cacaca;
+    color: #222222;
+    background-color: #d9d9d9;
+}
+
+.k-messagebox-light {
+    border-color: #f9f9f9;
+    color: #7a7a7a;
+    background-color: #fbfbfb;
+}
+
+.k-messagebox-inverse {
+    border-color: #cacaca;
+    color: #222222;
+    background-color: #d9d9d9;
+}

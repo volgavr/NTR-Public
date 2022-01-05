@@ -1,0 +1,267 @@
+﻿.k-form {
+    border-width: 0;
+    box-sizing: border-box;
+    font-size: inherit;
+    line-height: 1.42857143
+}
+    .k-form-label, .k-label, .k-form label {
+        font-weight: normal;
+    }
+
+.k-form-fieldset {
+    margin: 32px 0 0;
+    padding: 0 0;
+    border-width: 0;
+    box-sizing: border-box
+}
+
+    .k-form-fieldset > :first-child {
+        margin-top: 0
+    }
+
+.k-form-legend {
+    margin: 0 0 16px;
+    padding: 0 0;
+    border-style: solid;
+    width: 100%;
+    border-width: 0 0 2px;
+    box-sizing: border-box;
+    font-size: inherit;
+    line-height: 1.42857143;
+    text-transform: uppercase
+}
+
+.k-form-field {
+    margin-bottom: 16px;
+    box-sizing: border-box;
+    /*display: -ms-flexbox;
+            display: flex;
+            -ms-flex-flow: column nowrap;
+            flex-flow: column nowrap*/
+}
+
+    .k-form-field:first-child {
+        margin-top: 0
+    }
+
+    .k-form-field > .k-form-label, .k-form-field > .k-label {
+        margin: 0 0 4px;
+        /*display: -ms-inline-flexbox;
+                display: inline-flex;
+                -ms-flex-direction: row;
+                flex-direction: row;
+                -ms-flex-negative: 0;
+                flex-shrink: 0*/
+    }
+
+    .k-form-field .k-checkbox-label, .k-form-field .k-radio-label {
+        /*display: -ms-inline-flexbox;
+                display: inline-flex*/
+    }
+
+.form-control.k-widget {
+    padding: 0;
+    width: 100%;
+    height: auto;
+}
+
+    .form-control.k-widget:not(.k-autocomplete) {
+        border-width: 0;
+    }
+
+    .form-control.k-textbox,
+    .k-form-field .k-autocomplete, .k-form-field .k-combobox, .k-form-field .k-dateinput, .k-form-field .k-datepicker, .k-form-field .k-daterangepicker-wrap, .k-form-field .k-datetimepicker, .k-form-field .k-dropdown, .k-form-field .k-dropdowntree, .k-form-field .k-floating-label-container, .k-form-field .k-maskedtextbox, .k-form-field .k-multiselect, .k-form-field .k-numerictextbox, .k-form-field .k-textarea, .k-form-field .k-textbox, .k-form-field .k-textbox-container, .k-form-field .k-timepicker {
+        width: 100%
+    }
+
+.k-form-error, .k-form-hint {
+    padding: 4px 0 0;
+    margin: 0 0 4px;
+    font-size: 12px;
+    display: -ms-flexbox;
+    display: flex;
+    -ms-flex-flow: row nowrap;
+    flex-flow: row nowrap
+}
+
+    .k-form fieldset legend,
+    .k-form-inline fieldset legend {
+        color: #373737;
+    }
+
+    .k-form .k-form-legend,
+    .k-form-inline .k-form-legend {
+        border-color: rgba(0, 0, 0, 0.08);
+    }
+
+    .k-form .k-field-info,
+    .k-form-inline .k-field-info {
+        color: #666666;
+    }
+
+    .k-form .k-alert-error,
+    .k-form-inline .k-alert-error {
+        color: #f31700;
+    }
+
+.k-form-error,
+.k-text-error,
+.k-form-field-error .k-label {
+    color: #f31700;
+}
+
+.k-textbox.k-invalid, .k-textbox.k-state-invalid, .k-textbox.ng-invalid.ng-touched, .k-textbox.ng-invalid.ng-dirty {
+    border-color: rgba(243, 23, 0, 0.5);
+}
+
+.k-form-separator {
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+/*.k-form-horizontal .k-form-field {
+            display: -ms-flexbox;
+            display: flex;
+            -ms-flex-flow: row nowrap;
+            flex-flow: row nowrap
+        }
+
+            .k-form-horizontal .k-form-field > .k-form-label, .k-form-horizontal .k-form-field > .k-label {
+                margin-right: 10px;
+                padding-top: 5px;
+                width: 25%;
+                -ms-flex-direction: column;
+                flex-direction: column;
+                -ms-flex-align: end;
+                align-items: flex-end;
+                -ms-flex-pack: end;
+                justify-content: flex-end
+            }
+
+            .k-form-horizontal .k-form-field .k-label-optional {
+                margin: 0;
+                -ms-flex-item-align: inherit;
+                align-self: inherit
+            }
+
+        .k-form-horizontal .k-form-field-wrap {
+            -ms-flex: 1;
+            flex: 1
+        }*/
+
+.k-form-buttons {
+    margin: 16px 0 0;
+    padding: 0 0;
+    border-width: 0;
+    border-top-width: 0;
+    border-style: solid;
+    /*display: -ms-flexbox;
+            display: flex;
+            -ms-flex-flow: row nowrap;
+            flex-flow: row nowrap*/
+}
+
+
+
+/*.k-form-buttons > * {
+                -webkit-margin-start: 8px;
+                margin-inline-start: 8px
+            }
+
+            .k-form-buttons > :first-child {
+                -webkit-margin-start: 0;
+                margin-inline-start: 0
+            }
+
+            .k-form-buttons.k-buttons-end {
+                -ms-flex-pack: end;
+                justify-content: flex-end
+            }*/
+
+.k-edit-form {
+    margin: 0;
+    padding: 0
+}
+
+.k-window > div.k-popup-edit-form {
+    padding: 1em 0
+}
+
+.k-grid-edit-row .k-edit-form td {
+    border-bottom-width: 0
+}
+
+.k-edit-form-container {
+    position: relative;
+    width: 400px
+}
+
+    .k-edit-form-container .editor-label, .k-edit-label {
+        float: left;
+        clear: both;
+        width: 30%;
+        padding: .4em 0 1em;
+        margin-left: 2%;
+        text-align: right
+    }
+
+    .k-edit-field, .k-edit-form-container .editor-field {
+        float: right;
+        clear: right;
+        width: 60%;
+        margin-right: 2%;
+        padding: 0 0 .6em
+    }
+
+        .k-edit-field.k-no-editor, .k-edit-form-container .editor-field.k-no-editor {
+            padding: .4em 0 1em
+        }
+
+    .k-edit-form-container .k-button {
+        margin: 0 .16em
+    }
+
+    .k-edit-form-container .k-button-group .k-button {
+        margin-right: 0
+    }
+
+.k-edit-field > .k-button:first-child {
+    margin-left: 0
+}
+
+.k-edit-form-container .k-edit-buttons {
+    clear: both;
+    text-align: right;
+    border-width: 1px 0 0;
+    border-style: solid;
+    position: relative;
+    bottom: -1em;
+    padding: .6em
+}
+
+.k-input-group > .k-i-close {
+    position: absolute;
+    right: calc(1.14285714em - 8px);
+    top: 50%;
+    -webkit-transform: translateY(-50%);
+    -ms-transform: translateY(-50%);
+    transform: translateY(-50%);
+    font-size: 100%;
+    display: none;
+    cursor: pointer;
+}
+
+.k-state-active > .k-i-close,
+.k-state-hover > .k-i-close {
+    display: block;
+}
+
+@media screen and (max-width: 767px) {
+    .k-form .k-input,
+    .k-form-field .k-input {
+        font-size: 16px !important;
+    }
+    .k-form .k-label,
+    .k-form-field>.k-label {
+        font-size: 14px !important;
+    }
+}

@@ -1,0 +1,58 @@
+﻿@model CEMVC.FrontEnd.Web.Models.Auth.ResubscribeModel
+@{
+    ViewBag.Title = "Renewal of Subscription";
+    ViewBag.PageName = "Resubdcribe";
+    Layout = "~/Views/Shared/_Layout.responsive.cshtml";
+}
+<script>
+    $(document).ready(function () {
+        $("#formResubscribe").submit(function () {
+            if ($(this).valid()) {
+                $("#btnReSubscribe").attr("disabled", "disabled").addClass("dsb_button");
+                $("#loadingOverlay").removeClass("hidden");
+            }
+        });
+    });
+</script>
+<div class="panel panel-default ce-sign-up">
+    <div class="panel-heading"><h2 class="_heading">Renewal of Subscription</h2></div>
+    <div class="panel-body">
+        @using (Html.BeginForm("Resubscribe", "Auth", FormMethod.Post, new { id = "formResubscribe", autocomplete = "false", @class = "k-form" }))
+        {
+            @Html.AntiForgeryToken()
+        <div class="k-form-field">
+            @Html.LabelFor(model => model.Email, new { @class = "k-label" })
+            @Html.TextBoxFor(model => model.Email, new { @class = "k-textbox k-input" })
+            @Html.ValidationMessageFor(model => model.Email)
+        </div>
+        <div class="k-form-field">
+            @Html.LabelFor(model => model.Password, new { @class = "k-label" })
+            @Html.PasswordFor(model => model.Password, new { @class = "k-textbox k-input" })
+            @Html.ValidationMessageFor(model => model.Password)
+        </div>
+            if (Model.ActKey == null || Model.ActKey == string.Empty)
+            {
+            <div class="k-form-field">
+                @Html.LabelFor(model => model.ActKey, new { @class = "k-label" })
+                @Html.TextBoxFor(model => model.ActKey, new { @class = "k-textbox k-input" })
+                @Html.ValidationMessageFor(model => model.ActKey)
+            </div>
+            }
+            else
+            {
+            @Html.HiddenFor(model => model.ActKey)
+            }
+        <button class="btn btn-lg btn-block _signin" type="submit" id="btnReSubscribe"><span class="fas fa-user-check ce-icon _icn _left"></span> Re-Subscribe &nbsp;</button>
+            if (ViewData.ModelState.IsValid == false)
+            {
+        <div class="validation-summary-errors">
+            <ul>
+                @foreach (var error in ViewData.ModelState.Where(s => s.Value.Errors.Count != 0).SelectMany(s => s.Value.Errors))
+                {
+                    <li>@(error.ErrorMessage)</li>
+                }
+            </ul>
+        </div> }
+        }
+    </div>
+</div>

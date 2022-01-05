@@ -1,0 +1,61 @@
+﻿.k-dirty {
+    display: none;
+}
+.k-tabstrip {
+    background: none transparent;
+    border-width: 0;
+}
+    .k-tabstrip:focus {
+        -webkit-box-shadow: none;
+        box-shadow: none;
+    }
+
+.k-button:focus:active {
+    box-shadow: none
+}
+
+.k-i-clearformat::before {
+    content: "\e669"
+}
+.k-i-insertvar::before {
+    content: "\e919"
+}
+
+.k-numerictextbox.graybox-value,
+.graybox-value .k-numeric-wrap {
+    border-color: #ededed;
+    border-radius: 0;
+}
+
+.k-numeric-wrap .k-input.graybox-value {
+    background-color: #ededed;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.k-numerictextbox.bluebox-value,
+.bluebox-value .k-numeric-wrap {
+    border-color: #0d8dcf;
+    border-radius: 0;
+}
+
+.k-numeric-wrap .k-input.bluebox-value {
+    background-color: #0d8dcf;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.k-grid td.clipped {
+    text-overflow: clip
+}
+
+.k-notification {
+    max-width: 80%;
+    max-width: 80vw;
+    word-wrap: break-word;
+    white-space: normal;
+}
+
+.k-notification-wrap {
+    white-space: normal;
+}

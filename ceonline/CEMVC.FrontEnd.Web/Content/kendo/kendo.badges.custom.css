@@ -1,0 +1,384 @@
+﻿.k-badge {
+    padding: 0;
+    border-width: 0;
+    border-style: solid;
+    border-color: transparent;
+    box-sizing: border-box;
+    color: inherit;
+    background-color: transparent;
+    font: inherit;
+    text-align: center;
+    white-space: nowrap;
+    display: -ms-inline-flexbox;
+    display: inline-flex;
+    -ms-flex-align: center;
+    align-items: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+    vertical-align: middle;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+    .k-badge > * {
+        color: inherit;
+    }
+
+    a.k-badge,
+    .k-badge > a {
+        text-decoration: none;
+    }
+
+        a.k-badge:hover,
+        .k-badge > a:hover {
+            text-decoration: underline;
+        }
+
+.k-badge-icon {
+    max-width: 1em;
+    max-height: 1em;
+    font-size: inherit;
+}
+
+    .k-badge-icon.k-svg-icon svg {
+        fill: currentColor;
+    }
+
+.k-badge-sm {
+    padding: 2px 2px;
+    border-width: 1px;
+    font-size: 10px;
+    line-height: 1;
+}
+
+    .k-badge-sm:empty {
+        padding: 2px;
+    }
+
+.k-badge-md {
+    padding: 4px 4px;
+    border-width: 1px;
+    font-size: 10px;
+    line-height: 1;
+}
+
+    .k-badge-md:empty {
+        padding: 4px;
+    }
+
+.k-badge-lg {
+    padding: 6px 6px;
+    border-width: 1px;
+    font-size: 12px;
+    line-height: 1;
+}
+
+    .k-badge-lg:empty {
+        padding: 6px;
+    }
+
+.k-badge-rounded.k-badge-sm {
+    border-radius: 1px;
+}
+
+.k-badge-rounded.k-badge-md {
+    border-radius: 2px;
+}
+
+.k-badge-rounded.k-badge-lg {
+    border-radius: 4px;
+}
+
+.k-badge-pill {
+    border-radius: 5rem;
+}
+
+.k-badge-circle {
+    padding: 0 !important;
+    border-radius: 100%;
+}
+
+    .k-badge-circle.k-badge-sm {
+        width: calc(1em + 6px);
+        height: calc(1em + 6px);
+    }
+
+    .k-badge-circle.k-badge-md {
+        width: calc(1em + 10px);
+        height: calc(1em + 10px);
+    }
+
+    .k-badge-circle.k-badge-lg {
+        width: calc(1em + 14px);
+        height: calc(1em + 14px);
+    }
+
+.k-badge-dot {
+    padding: 0 !important;
+    border-radius: 100%;
+    font-size: 0;
+}
+
+    .k-badge-dot.k-badge-sm {
+        width: 6px;
+        height: 6px;
+    }
+
+    .k-badge-dot.k-badge-md {
+        width: 10px;
+        height: 10px;
+    }
+
+    .k-badge-dot.k-badge-lg {
+        width: 12px;
+        height: 12px;
+    }
+
+kendo-badge-container {
+    display: inline-block;
+}
+
+.k-badge-container {
+    position: relative;
+    overflow: visible;
+}
+
+.k-badge-inside {
+    position: absolute;
+    z-index: 9999;
+}
+
+.k-badge-edge {
+    position: absolute;
+    z-index: 9999;
+}
+
+    .k-badge-edge.k-top-start {
+        -webkit-transform: translate(-50%, -50%);
+        -ms-transform: translate(-50%, -50%);
+        transform: translate(-50%, -50%);
+    }
+
+    .k-badge-edge.k-top-end {
+        -webkit-transform: translate(50%, -50%);
+        -ms-transform: translate(50%, -50%);
+        transform: translate(50%, -50%);
+    }
+
+    .k-badge-edge.k-bottom-start {
+        -webkit-transform: translate(-50%, 50%);
+        -ms-transform: translate(-50%, 50%);
+        transform: translate(-50%, 50%);
+    }
+
+    .k-badge-edge.k-bottom-end {
+        -webkit-transform: translate(50%, 50%);
+        -ms-transform: translate(50%, 50%);
+        transform: translate(50%, 50%);
+    }
+
+.k-rtl .k-badge-edge.k-top-start,
+[dir="rtl"].k-badge-edge.k-top-start,
+[dir="rtl"] .k-badge-edge.k-top-start {
+    -webkit-transform: translate(50%, -50%);
+    -ms-transform: translate(50%, -50%);
+    transform: translate(50%, -50%);
+}
+
+.k-rtl .k-badge-edge.k-top-end,
+[dir="rtl"].k-badge-edge.k-top-end,
+[dir="rtl"] .k-badge-edge.k-top-end {
+    -webkit-transform: translate(-50%, -50%);
+    -ms-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+}
+
+.k-rtl .k-badge-edge.k-bottom-start,
+[dir="rtl"].k-badge-edge.k-bottom-start,
+[dir="rtl"] .k-badge-edge.k-bottom-start {
+    -webkit-transform: translate(50%, 50%);
+    -ms-transform: translate(50%, 50%);
+    transform: translate(50%, 50%);
+}
+
+.k-rtl .k-badge-edge.k-bottom-end,
+[dir="rtl"].k-badge-edge.k-bottom-end,
+[dir="rtl"] .k-badge-edge.k-bottom-end {
+    -webkit-transform: translate(-50%, 50%);
+    -ms-transform: translate(-50%, 50%);
+    transform: translate(-50%, 50%);
+}
+
+.k-badge-outside {
+    position: absolute;
+    z-index: 9999;
+}
+
+    .k-badge-outside.k-top-start {
+        -webkit-transform: translate(-100%, -100%);
+        -ms-transform: translate(-100%, -100%);
+        transform: translate(-100%, -100%);
+    }
+
+    .k-badge-outside.k-top-end {
+        -webkit-transform: translate(100%, -100%);
+        -ms-transform: translate(100%, -100%);
+        transform: translate(100%, -100%);
+    }
+
+    .k-badge-outside.k-bottom-start {
+        -webkit-transform: translate(-100%, 100%);
+        -ms-transform: translate(-100%, 100%);
+        transform: translate(-100%, 100%);
+    }
+
+    .k-badge-outside.k-bottom-end {
+        -webkit-transform: translate(100%, 100%);
+        -ms-transform: translate(100%, 100%);
+        transform: translate(100%, 100%);
+    }
+
+.k-rtl .k-badge-outside.k-top-start,
+[dir="rtl"].k-badge-outside.k-top-start,
+[dir="rtl"] .k-badge-outside.k-top-start {
+    -webkit-transform: translate(100%, -100%);
+    -ms-transform: translate(100%, -100%);
+    transform: translate(100%, -100%);
+}
+
+.k-rtl .k-badge-outside.k-top-end,
+[dir="rtl"].k-badge-outside.k-top-end,
+[dir="rtl"] .k-badge-outside.k-top-end {
+    -webkit-transform: translate(-100%, -100%);
+    -ms-transform: translate(-100%, -100%);
+    transform: translate(-100%, -100%);
+}
+
+.k-rtl .k-badge-outside.k-bottom-start,
+[dir="rtl"].k-badge-outside.k-bottom-start,
+[dir="rtl"] .k-badge-outside.k-bottom-start {
+    -webkit-transform: translate(100%, 100%);
+    -ms-transform: translate(100%, 100%);
+    transform: translate(100%, 100%);
+}
+
+.k-rtl .k-badge-outside.k-bottom-end,
+[dir="rtl"].k-badge-outside.k-bottom-end,
+[dir="rtl"] .k-badge-outside.k-bottom-end {
+    -webkit-transform: translate(-100%, 100%);
+    -ms-transform: translate(-100%, 100%);
+    transform: translate(-100%, 100%);
+}
+
+.k-badge-border-cutout {
+    box-shadow: 0 0 0 2px #ffffff;
+}
+
+.k-badge-solid.k-badge-primary {
+    border-color: #ff6358;
+    color: #ffffff;
+    background-color: #ff6358;
+}
+
+.k-badge-solid.k-badge-secondary {
+    border-color: #666666;
+    color: #ffffff;
+    background-color: #666666;
+}
+
+.k-badge-solid.k-badge-tertiary {
+    border-color: #03a9f4;
+    color: #ffffff;
+    background-color: #03a9f4;
+}
+
+.k-badge-solid.k-badge-info {
+    border-color: #0058e9;
+    color: #ffffff;
+    background-color: #0058e9;
+}
+
+.k-badge-solid.k-badge-success {
+    border-color: #37b400;
+    color: #ffffff;
+    background-color: #37b400;
+}
+
+.k-badge-solid.k-badge-warning {
+    border-color: #ffc000;
+    color: #000000;
+    background-color: #ffc000;
+}
+
+.k-badge-solid.k-badge-error {
+    border-color: #f31700;
+    color: #ffffff;
+    background-color: #f31700;
+}
+
+.k-badge-solid.k-badge-dark {
+    border-color: #424242;
+    color: #ffffff;
+    background-color: #424242;
+}
+
+.k-badge-solid.k-badge-light {
+    border-color: #ebebeb;
+    color: #000000;
+    background-color: #ebebeb;
+}
+
+.k-badge-solid.k-badge-inverse {
+    border-color: #424242;
+    color: #ffffff;
+    background-color: #424242;
+}
+
+.k-badge-inline {
+    vertical-align: baseline;
+}
+
+.k-badge-outline {
+    border-color: currentColor;
+    background-color: #ffffff;
+}
+
+    .k-badge-outline.k-badge-primary {
+        color: #ff6358;
+    }
+
+    .k-badge-outline.k-badge-secondary {
+        color: #666666;
+    }
+
+    .k-badge-outline.k-badge-tertiary {
+        color: #03a9f4;
+    }
+
+    .k-badge-outline.k-badge-info {
+        color: #0058e9;
+    }
+
+    .k-badge-outline.k-badge-success {
+        color: #37b400;
+    }
+
+    .k-badge-outline.k-badge-warning {
+        color: #ffc000;
+    }
+
+    .k-badge-outline.k-badge-error {
+        color: #f31700;
+    }
+
+    .k-badge-outline.k-badge-dark {
+        color: #424242;
+    }
+
+    .k-badge-outline.k-badge-light {
+        color: #ebebeb;
+    }
+
+    .k-badge-outline.k-badge-inverse {
+        color: #424242;
+    }

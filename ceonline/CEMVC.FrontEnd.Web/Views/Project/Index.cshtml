@@ -1,0 +1,469 @@
+﻿@using System.Globalization
+@model CEMVC.FrontEnd.Web.Models.Project.ProjectEditStandartViewModel
+@section pageHeading {
+    <div class="container _lg ce-bg-primary">
+        <div class="ce-content-heading">Project Manager &ndash; Project Overview</div>
+    </div>
+}
+@{
+    ViewBag.Title = new HtmlString("Project &ndash; Clear Estimates");
+    ViewBag.PageName = "Project";
+    Layout = "~/Views/Shared/_Layout.responsive.cshtml";
+    bool isProUser = DependencyResolver.Current.GetService<CEMVC.Core.BLL.Infrastructure.IUserSecurity>().IsPro();
+    var currentProject = WebHelper.GetCurrentProject();
+}
+@section extraJS {
+    <link href="~/Content/Site.modal.responsive.css" rel="stylesheet" />
+}
+@Html.HiddenFor(m => m.ProjectId, new { id = "project_Id" })
+<div class="row ce-project-heading">
+    <div class="col-sm-8">
+        <div class="row">
+            <div class="col-8 col-sm-6">
+                <div class="h3 _title position-relative">
+                    @Html.TextBoxFor(m => m.Title, new { id = "projectTitle" }) <span class="_icn ce-icon fas fa-pen _light"></span> @Html.HiddenFor(m => m.Title, new { id = "projectTitle_hidden" })
+                </div>
+                <div class="_description" id="projectDescription">
+                    @Html.TextAreaFor(m => m.Description, new { id= "projectDescrEdit", placeholder = "Add Project Description Here", style="display:none" })
+                    <span class="_text ce-webkit-box-2-lines ce-clickable" id="projectDescrText">@if (string.IsNullOrEmpty(Model.Description))
+                    {
+                        <span class="text-muted">Add Project Description Here</span>
+                    }
+                    else { @Model.Description }
+                    @Html.HiddenFor(m => m.Description)
+                    </span>
+                </div>
+            </div>
+            <div class="col-4 col-sm-6 h5">
+                <span class="fas fa-user ce-icon-sm text-muted" role="presentation"></span> @Model.CustomerName
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="ce-dashboard _dashboard row">
+            <a class="ce-dashboard-item _item col-xs-3">
+                <span role="button" class="_icn _export"></span>
+                <span role="button" class="_text">Export</span>
+            </a>
+            <a class="ce-dashboard-item _item col-xs-3">
+                <span role="button" class="_icn _view"></span>
+                <span role="button" class="_text">View</span>
+            </a>
+            <a class="ce-dashboard-item _item col-xs-3">
+                <span role="button" class="_icn _send"></span>
+                <span role="button" class="_text">Send</span>
+            </a>
+            <a class="ce-dashboard-item _item col-xs-3">
+                <span role="button" class="_icn _extra"></span>
+                <span role="button" class="_text">More</span>
+            </a>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="k-messagebox k-messagebox-warning hidden" id="pageDesignAlert" role="alert" style="padding:10px 15px; margin-bottom:0">
+        <button type="button" class="k-button k-flat pull-right" data-dismiss="alert" aria-label="Close" style="margin-right:-15px; margin-top:-10px;">
+            <span aria-hidden="true" class="k-icon k-i-close-circle ce-icon ce-icon-md"></span>
+        </button>
+        We've redesigned the Project page, <a href="https://help.clearestimates.com/en_US/estimate" class="alert-link">Click Here to Learn More.</a><br />
+        If you don't like it, <a href="@Url.Action("Version", new { id = "revert" })" class="alert-link">Go back to the old one.</a>
+    </div>
+</div>
+<div class="ce-project-search row">
+    <div class="col-md-8 col-md-offset-2">
+        <div class="ce-my">
+            <input type="text" class="form-control" placeholder="Search for parts, templates or recent projects">
+        </div>
+        <ul class="row _toolbar list-unstyled list-inline">
+            <li class="col-xs-4">
+                <a role="button" class="_btn">
+                    <span class="_icn _browse"></span>
+                    <span class="_text ce-webkit-box-2-lines">Browse Part Library</span>
+                </a>
+            </li>
+            <li class="col-xs-4">
+                <a role="button" class="_btn">
+                    <span class="_icn _custom"></span>
+                    <span class="_text ce-webkit-box-2-lines">Create Custom Part</span>
+                </a>
+            </li>
+            <li class="col-xs-4">
+                <a role="button" class="_btn">
+                    <span class="_icn _template"></span>
+                    <span class="_text ce-webkit-box-2-lines">Add Template</span>
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<div class="ce-project-grid-area _detailed">
+    <div class="_heading" id="projectGrid_heading">
+        <div class="row _flexy no-gutters">
+            <div class="col-6 _title-group _detailed">
+                <span class="_title ce-label-wrap ce-text-primary ce-va-md"><img src="~/Content/ce/i-doc-stamped.svg" class="_icn" /> Project Parts</span>
+                <a role="button" class="btn ce-btn-label ce-btn-media ce-ml hidden-sm hidden-xs"><span class="k-icon k-i-group ce-text-primary _rot-45"></span> Add Component</a>
+                <a role="button" class="btn ce-btn-label ce-btn-media ce-ml hidden-sm hidden-xs" id="addAlternate"><span class="k-icon k-i-share ce-text-primary-alt _rot-90"></span>Add Alternate</a>
+                <a role="button" class="ce-ml visible-sm-inline visible-xs-inline">
+                    <img src="~/Content/ce/i-more.svg" />
+                </a>
+            </div>
+            <div class="col-6 _title-group ce-text-caution _summary">
+                <span class="fa-stack _icn"><i class="fas fa-circle fa-stack-2x"></i><i class="fas fa-list-ul fa-stack-1x fa-inverse"></i></span>
+                <span class="_title">
+                    Summary View
+                </span>
+            </div>
+            <div class="col-6 _toggle-group">
+                <div class="_markup-toggle hidden-xs">
+                    <span class="ce-label-wrap">
+                        <label class="ce-switch">
+                            <input type="checkbox" name="IncludeMarkup" value="true" id="costIncludesMarkupCheckbox" @(Model.IncludeMarkup ? "checked" : "") />
+                            <span class="_slider"></span>
+                        </label> &nbsp; <input type="hidden" name="IncludeMarkup" value="false" />
+                        <label for="costIncludesMarkupCheckbox" class="ce-label ce-clickable"><span class="hidden-sm hidden-xs">Display</span> with Markup</label>
+                    </span>
+                </div>
+                <div role="button" class="_grid-toggle ce-text-bold _detailed" data-toggle="grid">
+                    <span class="fa-stack ce-icon-sm"><i class="fas fa-circle fa-stack-2x"></i><i class="fas fa-list-ul fa-stack-1x fa-inverse ce-text-caution _icn"></i></span> Summary
+                </div>
+                <div role="button" class="_grid-toggle _close ce-text-bold _summary" data-toggle="grid">
+                    <span class="fas fa-times-circle fa-2x"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+    @(Html.Kendo().Grid<CEMVC.FrontEnd.Web.Models.Project.ProjectPartDetailsListViewModel>()
+                .Name("projectDetailsGrid")
+                .Columns(col =>
+                {
+                    col.Bound(p => p.Id).IncludeInMenu(false).Width(30).HeaderHtmlAttributes(new { @class = "_head" }).HeaderTemplate(@<text><span role="button" class="ce-icon fas fa-cog ce-icon-md _light" title="Bulk Commands"></span></text>).Sortable(false).ClientTemplate("<span class='ce-icon _grip'></span>").HtmlAttributes(new { @class = "_head _grip" });
+                    col.Bound(o => o.CompTitle).Width(40).Title("").Sortable(false).Media("md");
+                    col.Bound(o => o.Description).Title("Description").ClientTemplate("#= Description # <div class=\"text-muted visible-xs-block visible-sm-block visible-md-block\">#= unitTypeFormat(UnitTypeId) # #= Qty # #= Category #</div>").ClientFooterTemplate("<div>Total:</div><div class='_m'>Markup:</div><div class='_bid'>Base Bid:</div>").HtmlAttributes(new { @class = "_editable", data_edit_type="title" });
+                    col.Bound(c => c.UnitTypeId).Title("Units").Width(50).Media("xl").ClientTemplate("#= unitTypeFormat(UnitTypeId) #").HtmlAttributes(new { @class = "ce-text-caution ce-text-centered" }).Sortable(false);
+                    col.Bound(c => c.Qty).Title("Qty").Width(70).Media("xl");
+                    col.Bound(o => o.Category).Title("Category").Media("xl");
+                    col.Bound(o => o.LabHours).Title("Hours").Format("{0:n1}").Width(60).Media("lg");
+                    col.Bound(o => o.Material).Title("Material").Format("{0:c}").Width(100).Media("lg").HtmlAttributes(new { @class = "_editable", data_edit_type = "cost" });
+                    col.Bound(o => o.Labor).Title("Labor").Format("{0:c}").Width(100).Media("lg");
+                    col.Bound(c => c.SubCont).Title("Sub-Cont.").Format("{0:c}").Width(90).Media("lg");
+                    col.Bound(c => c.Total).Title("Total").Format("{0:c}").Width(100).HtmlAttributes(new { @class = "_b" });
+                    col.Template(@<text></text>).Width(130).HeaderTemplate(@<text><span role="button" class="k-button k-button-icontext" id="projectDetailsBatchCmdMenuBtn"><span class="k-icon k-i-more-vertical"></span> Actions</span><label class="ce-checkbox"><input type="checkbox" id="projectDetailsBatch_checkbox"><span class="fas _icn" aria-hidden="true"></span></label></text>).HeaderHtmlAttributes(new { @class = "ce-label-wrap _tail" }).ClientTemplate(@"<a role='button' class='ce-icon-btn ce-b-0 ce-btn-clear k-grid-edit' title='Edit' data-action='edit'><span class='ce-icon fas fa-pen _light'></span></a><a role='button' class='ce-icon-btn ce-b-0 ce-btn-clear' title='Delete' data-action='delete'><span class='ce-icon fas fa-trash _light'></span></a><label class='ce-checkbox'><input type='checkbox'><span class='fas _icn' aria-hidden='true'></span></label>").HtmlAttributes(new { @class = "_tools" });
+                })
+                .HtmlAttributes(new { @class="_detailed", style = "height: 550px;"} )
+                .Scrollable()
+                //.Groupable(g => g.Sort(f => f))
+                .Sortable(sort => sort.AllowUnsort(true).SortMode(GridSortMode.SingleColumn))
+                //.Pageable(pageable => pageable.Refresh(true).PageSizes(true).ButtonCount(5))
+                .Events(e => e.DataBound("project.detailsDataBound").Sort("project.detailsSorted"))
+                .DataSource(dataSource => dataSource
+                    .Ajax()
+                    .Batch(true)
+                    .ServerOperation(false)
+                    .Aggregates(ag =>
+                    {
+                        ag.Add(p => p.LabHours).Sum();
+                        ag.Add(p => p.RawMaterial).Sum();
+                        ag.Add(p => p.RawLabor).Sum();
+                        ag.Add(p => p.RawSubCont).Sum();
+
+                        ag.Add(p => p.MarkupMat).Sum();
+                        ag.Add(p => p.MarkupLab).Sum();
+                        ag.Add(p => p.MarkupSubctr).Sum();
+
+                        //ag.Add(p => p.Total).Sum();
+                    })
+                    //.Group(gr => { gr.Add<CEMVC.FrontEnd.Web.Models.Project.ProjectPartListItem>("ProjName", System.ComponentModel.ListSortDirection.Ascending, "partGroupComparer"); })
+                    .Read(rd => rd.Action("ProjectPartsDetailed", "Project").Type(HttpVerbs.Get).Data("gridViewParam"))
+                    .Destroy(ds => ds.Action("RemoveProjectParts", "Project").Data("gridViewParam"))
+                    .Sort(sort => {
+
+                        sort.Add("Rank");
+                        sort.Add("Title");
+                        sort.Add("Id");
+                    })
+                    .Model(model => model.Id(p => p.Id))
+                )
+    )
+
+    @(Html.Kendo().Grid<CEMVC.FrontEnd.Web.Models.Project.ProjectPartSummaryListViewModel>()
+                .Name("projectSummaryGrid")
+                .Columns(columns =>
+                {
+                    columns.Bound(p => p.Id).IncludeInMenu(false).Width(30).HeaderTemplate(@<text><img src="@Url.Content("~/Content/ce/i-gear.svg")" /></text>).HeaderHtmlAttributes(new { @class = "_head" }).Sortable(false).ClientTemplate(" ").ClientFooterTemplate("<div></div><div class='_m'></div><div class='ce-bg-primary'></div>");
+                    columns.Bound(o => o.Category).Title("Category").ClientFooterTemplate("<div>Total:</div><div class='_m'>Markup:</div><div class='ce-bg-primary'>Base Bid:</div>");
+                    columns.Bound(o => o.LabHours).Title("Hours").Format("{0:n1}").Width(80).ClientFooterTemplate("<div>#: kendo.toString(sum, 'n1') #</div><div class='_m'></div><div class='ce-bg-primary'></div>");
+                    columns.Bound(o => o.Labor).Title("Labor").Format("{0:c}").Width(90).Media("md");
+                    columns.Bound(o => o.Material).Title("Material").Format("{0:c}").Width(90).Media("md");
+                    columns.Bound(o => o.CoCost).Title("Com. Cost").Format("{0:c}").Width(90).Media("lg");
+                    columns.Bound(o => o.RoughHours).Title("Rgh Hours").Format("{0:n1}").Width(90).Media("md").Hidden(true).IncludeInMenu(true).ClientFooterTemplate("<div>#: kendo.toString(sum, 'n1') #</div><div class='_m'></div><div class='ce-bg-primary'></div>");
+                    columns.Bound(o => o.FinishHours).Title("Fin. Hours").Format("{0:n1}").Width(90).Media("md").Hidden(true).IncludeInMenu(true).ClientFooterTemplate("<div>#: kendo.toString(sum, 'n1') #</div><div class='_m'></div><div class='ce-bg-primary'></div>");
+                    columns.Bound(o => o.SubCost).Title("Sub-Cont.").Format("{0:c}").Width(90).Media("md");
+                    columns.Bound(o => o.Total).Title("Total").Format("{0:c}").Width(100).HtmlAttributes(new { @class = "_b" });
+                })
+                .HtmlAttributes(new { style = "height: 550px;", @class = "_summary"})
+                .Scrollable()
+                .Events(e => e.DataBound("project.summaryDataBound"))
+                .AutoBind(false)
+                .DataSource(dataSource => dataSource.Ajax()
+                .Batch(false)
+                .ServerOperation(false)
+            .Read(read => read.Action("ProjectPartsSummary", "Project").Data("gridViewParam"))
+            .Aggregates(ag =>
+            {
+                ag.Add(p => p.LabHours).Sum();
+                ag.Add(p => p.material_cost).Sum();
+                ag.Add(p => p.labor_cost).Sum();
+                ag.Add(p => p.subcont_unit_cost).Sum();
+                ag.Add(p => p.MarkupLab).Sum();
+                ag.Add(p => p.MarkupMat).Sum();
+                ag.Add(p => p.MarkupSubctr).Sum();
+                ag.Add(p => p.RoughHours).Sum();
+                ag.Add(p => p.FinishHours).Sum();
+            }).Sort(sort => { sort.Add(f => f.CategoryRank);
+                sort.Add(f => f.Category);
+            })
+            )
+    )
+</div>
+<div class="ce-project-markups _debug row">
+    <p class="_debug-content">Markups</p>
+</div>
+<div class="ce-project-subprojects _debug row">
+    <div class="col-lg-6 _debug-content">Components</div>
+    <div class="col-lg-6 _debug-content">Alternates</div>
+</div>
+<div class="ce-project-misc-items _debug row">
+    <p class="_debug-content">Misc Items</p>
+</div>
+<div id="partAdjustDialog" class="modal fade" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content ce-part-adjust-content">
+            <div class="modal-header k-window-titlebar k-header">
+                <span class="k-window-title ce-text-bold small">Adjust Part</span>
+                <span class="k-spacer"></span>
+                <div class="k-window-actions">
+                    <a role="button" href="#" title="Condensed View" class="k-button k-flat k-button-icon k-window-action" aria-label="Condense" data-action="collapse" data-action-handler="partEdit_condenseTools">
+                        <span class="fas fa-compress-alt"></span>
+                    </a>
+                    <a role="button" href="#" title="Expanded View" class="k-button k-flat k-button-icon k-window-action hidden" aria-label="Expand" data-action="expand" data-action-handler="partEdit_expandTools">
+                        <span class="fas fa-expand-alt"></span>
+                    </a>
+                    <a role="button" href="#" class="k-button k-flat k-button-icon k-window-action" aria-label="Close" data-dismiss="modal"><span class="k-icon k-i-close"></span></a>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="row ce-part-adjust-placeholder">&nbsp;</div>
+            </div>
+            <div class="modal-footer ce">
+                <button type="button" class="btn btn-lg ce-btn" data-dismiss="modal"><span class="ce-icon _close"></span>&nbsp; Close</button>
+                <button type="button" class="btn btn-lg ce-btn" role="button" data-type="submit"><span class="ce-icon _done"></span>&nbsp; Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+<svg display="none">
+    <symbol id="unit-type-1">@Html.Raw(File.ReadAllText(Server.MapPath("~/Images/i-unit-piece.svg")))</symbol>
+    <symbol id="unit-type-2">@Html.Raw(File.ReadAllText(Server.MapPath("~/Images/i-unit-square.svg")))</symbol>
+    <symbol id="unit-type-3">@Html.Raw(File.ReadAllText(Server.MapPath("~/Images/i-unit-length.svg")))</symbol>
+    <symbol id="unit-type-4">@Html.Raw(File.ReadAllText(Server.MapPath("~/Images/i-unit-volume.svg")))</symbol>
+    <symbol id="unit-type-5">@Html.Raw(File.ReadAllText(Server.MapPath("~/Images/i-unit-money.svg")))</symbol>
+    <symbol id="unit-type-6">@Html.Raw(File.ReadAllText(Server.MapPath("~/Images/i-unit-time.svg")))</symbol>
+</svg>
+<script src="~/Scripts/ProjectPage.js"></script>
+<ul class="list-unstyled _bulk-menu" id="batchCmdMenu">
+    <li><a class="k-link" href="\#" data-action="move">Move</a></li>
+    <li><a class="k-link" href="\#" data-action="copy">Copy</a></li>
+    <li><a class="k-link" href="\#" data-action="delete">Delete</a></li>
+</ul>
+<div id="gridEditTitlePopup" class="ce-grid-edit-popup k-form" style="width:300px">
+    <div class="pull-right" style="margin-right:-5px">
+        <a class="k-button k-button-icon k-flat" title="Save" data-type="submit"><span class="k-icon k-i-check"></span></a>
+        <a class="k-button k-button-icon k-flat" title="Close" data-type="cancel"><span class="k-icon k-i-close"></span></a>
+    </div>
+    <div class="h4 clearfix" role="heading">Report Text <small class="text-muted" style="display:none">(Updating...)</small></div>
+    <label class="control-label">Preliminary</label>
+    <div class="form-group">
+        <input name="preliminary_text" type="text" class="form-control" autocomplete="off" />
+    </div>
+    <label class="control-label">Formal</label>
+    <div class="form-group">
+        <input name="formal_text" type="text" class="form-control" autocomplete="off" />
+    </div>
+    <label class="control-label">Subcontractor</label>
+    <div class="form-group">
+        <input name="subcontractor_text" type="text" class="form-control" autocomplete="off" />
+    </div>
+</div>
+<div id="gridEditCostPopup">
+    <label class="control-label">$ / Price</label>
+    <div class="form-group">
+        <input name="cost" type="text" class="form-control" autocomplete="off" />
+    </div>
+</div>
+<div id="partCopyOrMoveDialog">
+    @Html.Partial("Partial/PartMovingForm", new CEMVC.FrontEnd.Web.Models.Project.BulkOperationModel { ProjectId = Model.ProjectId, DestinationalCustomerId = Model.Customer.HasValue ? Model.Customer.Value.Id : 0 })
+</div>
+<script>
+    function gridViewParam() {
+        return {
+            id: $('#project_Id').val(),
+            includeMarkup: $('#costIncludesMarkupCheckbox').is(':checked')
+        };
+    };
+
+    function unitTypeFormat(utype) {
+        if (utype > 0 && utype <= 6)
+            return '<svg width="18" height="18" class="_unit"><use xlink:href="#unit-type-' + utype + '"></use></svg>';
+        return '';
+    }
+
+    $(document).ready(function () {
+        $('#pageDesignAlert').on('click', 'button[data-dismiss]', function () {
+            if (window.localStorage)
+                localStorage.setItem('project-page-redesigned-dismiss', '1');
+            $(this).closest('[role=alert]').slideUp();
+        }).on('click', 'a[data-role=submit]', function () {
+            $.get('@Url.Action("ProjectDesignToggleQuery", "Metrics")', { getUpgraded: false }, $.noop);
+        });
+
+        $('#projectDescrText').on('click', function (e) { $(this).siblings().show().focus(); });
+        $('#projectDescription').on('focusout', function (e) { $('#projectDescrEdit').hide(); });
+        $('#projectTitle').on('change', project.titleChange);
+        $('#projectDescrEdit').on('change', project.descriptionChange);
+
+        $('#projectGrid_heading').on('click', '[data-toggle=grid]', project.toggleProjectPartGridView);
+        $('#costIncludesMarkupCheckbox').on('change', project.includeMarkupChange);
+
+        $('#projectDetailsGrid')
+            .on('change', '#projectDetailsBatch_checkbox', project.selectAllCheck)
+            .on('click', 'a[data-action=edit]', project.editItemClick)
+            .on('click', 'a[data-action=delete]', project.deleteItemClick)
+            .on('change', 'td._tools input:checkbox', project.gridRowCheck)
+            .on('mousedown', 'td._grip._disabled', project.rowReorderClick)
+            .on('click', '.k-grid-content tbody tr td[data-edit-type]', function () {
+                var popupId = $(this).attr('data-edit-type') == 'title' ? 'gridEditTitlePopup' : 'gridEditCostPopup',
+                    popup = $('#' + popupId).data('kendoPopup');
+                if (!popup) {
+                    console.error('#' + popupId + ' does not have Popup data bound');
+                    return
+                }
+                popup.setOptions({
+                    anchor: $(this)
+                });
+                popup.open();
+            });
+
+        project.sortableRows('#projectDetailsGrid');
+
+        $('#partAdjustDialog .modal-footer').on('click', 'button[data-type=submit]', project.partEditSubmit);
+        $(document).on('partUpdated.project', (e) => { project.refreshGridDataSource('#projectDetailsGrid, #projectSummaryGrid') })
+            .on('gridRowCheck.project', (e) => { $('#projectDetailsBatchCmdMenuBtn').css('visibility', project.getCheckedRows('#projectDetailsGrid').length == 0 ? 'hidden' : 'visible'); });
+
+        var copyMoveDialog = $('#partCopyOrMoveDialog').kendoDialog({
+            animation: {
+                open: {
+                    effects: "fade:in",
+                    duration: 200
+                }
+            },
+            //width: "450px",
+            title: "**** Project Parts",
+            closable: true,
+            modal: true,
+            visible: false,
+            size: "small",
+
+            //content: "<p>A new version of <strong>Kendo UI</strong> is available. Would you like to download and install it now?<p>",
+            actions: [
+                { text: '<span class="k-icon k-i-close-circle ce-text-caution _icn-md"></span> Cancel', cssClass: 'ce-btn-icon' },
+                {
+                    text: '<span class="k-icon k-i-check-circle _icn-md _continue"></span> Continue',
+                    action: function (e) {
+                        project.applyCheckedRows('#projectDetailsGrid', e.sender);
+                        //return false; to prevent closing
+                    }
+                }
+            ],
+            buttonLayout: "normal",
+            initOpen: function (e) {
+                $('input[data-role=dropdownlist]:first', this.element.context).data('kendoDropDownList').dataSource.read();
+            },
+            close: function () { }
+        }).data('kendoDialog');
+
+        $("#gridEditTitlePopup").kendoPopup({
+            appendTo: "body",
+            origin: "bottom left",
+            position: "top left",
+            //collision: "fit flip",
+            open: function (e) {
+                e.sender.options.anchor.addClass('_selected');
+                project.partTitleEdit(e.sender.options.anchor, e.sender.element);
+            },
+            close: function (e) {
+                $('input:text', e.sender.element).val('');
+                e.sender.options.anchor.removeClass('_selected');
+            }
+        }).on('click', 'a[data-type=cancel]', project.partTitleEditCloseClick)
+            .on('click', 'a[data-type=submit]', project.partTitleEditSubmitClick);
+
+        $("#gridEditCostPopup").kendoPopup({
+            appendTo: "body",
+            origin: "bottom left",
+            position: "top left",
+            //collision: "fit flip",
+            open: function (e) {
+                e.sender.options.anchor.addClass('_selected');
+            },
+            close: function (e) {
+                e.sender.options.anchor.removeClass('_selected');
+                var grid = $("#projectDetailsGrid").data("kendoGrid");
+
+                var dataItem = grid.dataItem(e.sender.options.anchor.closest('tr'));
+                //dataItem.set("Material", 99.99);
+                dataItem.set("RawMaterial", 99.99);
+                //grid.refresh();
+                //dataItem.set("name", "Devina");
+                //dataItem.set("location", "D");
+               // dataItem.set("color", "purple");
+            }
+        });
+
+        var bulkActionMenu = $("#batchCmdMenu").kendoPopup({
+            anchor: '#projectDetailsBatchCmdMenuBtn',
+            appendTo: "body",
+            origin: "bottom center",
+            position: "top center",
+            collision: "fit flip",
+            adjustSize: {
+                width: 200,
+                height: 150
+            }
+        }).data('kendoPopup');
+
+        $("#projectDetailsBatchCmdMenuBtn").on('click', () => { bulkActionMenu.toggle(); }).css('visibility', 'hidden');
+        $('#batchCmdMenu').on('click', 'a[data-action]', function (e) {
+            e.preventDefault();
+            bulkActionMenu.close();
+            var rows = project.getCheckedRows('#projectDetailsGrid');
+            if (rows.length == 0) {
+                kendo.alert("Check at least one row in the grid");
+                return;
+            }
+            var cmd = $(this).attr('data-action');
+            if (cmd == 'delete') {
+                project.confirmDeleteRows('#projectDetailsGrid');
+            }
+            else {
+                copyMoveDialog.title(cmd.replace(/^./, cmd[0].toUpperCase()) + ' Project Parts');
+                $(copyMoveDialog.element.get(0)).find('#Action_name').val(cmd);
+                copyMoveDialog.open();
+            }
+        }).on('mouseenter mouseleave', 'a[data-action]', function (e) { $(this).toggleClass('k-state-selected', e.type == 'mouseenter'); });
+
+        if (!window.localStorage || localStorage.getItem('project-page-redesigned-dismiss') != '1') {
+            $('#pageDesignAlert').removeClass('hidden');
+        }
+    });
+</script>

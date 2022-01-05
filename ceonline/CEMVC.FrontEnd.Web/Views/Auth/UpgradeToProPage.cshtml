@@ -1,0 +1,111 @@
+﻿@{
+    ViewBag.PageName = "UpgradeToPro";
+    ViewBag.Title = "Upgrade to Clear Estimates Pro";
+    Layout = "~/Views/Shared/_Layout.responsive.cshtml";
+
+    string message;
+    int subscriptionType = DependencyResolver.Current.GetService<CEMVC.Core.BLL.Infrastructure.IUserSecurity>().GetSubscriptionType(out message);
+    string userEmail = DependencyResolver.Current.GetService<CEMVC.Core.BLL.Infrastructure.IUserSecurity>().GetCurrentUserInfo().Email;
+}
+<div class="k-content ce-upgrade-version">
+    <h1 class="h2">Clear Estimates <b class="ce-text-caution">Pro</b></h1>
+    <ul class="list-unstyled" style="padding-left: 1.5em">
+        <li><span class="ce-icon _icn-md _left fas fa-check _success" role="presentation"></span> <span class="ce-text-primary lead"> Integrated with</span>
+            <ul class="list-unstyled" style="padding-left: 1.5em">
+                <li><span class="ce-icon _icn-sm _left fas fa-check _success" role="presentation"></span>Buildertrend</li>
+                <li><span class="ce-icon _icn-sm _left fas fa-check _success" role="presentation"></span>Your preferred CRM</li>
+                <li><span class="ce-icon _icn _left fas fa-check _success" role="presentation"></span>Your preferred email marketing tool</li>
+                <li><span class="ce-icon _icn-sm _left fas fa-check _success" role="presentation"></span>Your preferred task manager</li>
+                <li><span class="ce-icon _icn-sm _left fas fa-check _success" role="presentation"></span>... much, much more!</li>
+            </ul>
+        </li>
+        <li class="ce-text-primary lead"><span class="ce-icon _icn-md _left fas fa-check _success" role="presentation"></span>Add multiple users to your account</li>
+    </ul>
+    @{
+        if (subscriptionType == 1)
+        {
+            <p class="lead">Click below to send a request to our support team on how to upgrade your account to <b class="ce-text-primary">Clear Estimates <span class="ce-text-caution">Pro</span></b></p>
+        }
+        <div class="form-group">
+            <button type="button" class="btn btn-lg _signin" id="initInvoiceBtn" onclick="initInvoiceDialog()"><span class="fas fa-file-invoice-dollar ce-icon _icn _left"></span> Upgrade Now &nbsp;</button>
+        </div>
+    }
+</div>
+<div id="InvoiceWindow"></div>
+<script>
+    var isUpgardePressed = false;
+    $(document).ready(function () {
+        jQuery(window).bind('beforeunload', function () {
+            if (!isUpgardePressed && _veroq)
+                _veroq.push(['track', 'upgrade_to_pro[failed]', {
+                    email: '@userEmail',
+                }]);
+        });
+    });
+
+    function initInvoiceDialog() {
+        isUpgardePressed = true;
+        if ($("#initInvoiceBtn").is(':disabled')) { return; }
+
+        var dialog = $("#InvoiceWindow").kendoWindow({
+            title: "Upgrade Summary",
+            width: ($(window).width() <= 480) ? 0.92 * $(window).width() : 480,
+            minHeight: '@(subscriptionType == 2 ? "300px" : "220px" )',
+            height: 'auto',
+            visible: false,
+            content: {
+                url: '@Url.Action(subscriptionType == 2 ? "InitToProInvoiceSummary" : "RequestUpgradeToPro", "Auth")',
+            },
+            modal: true,
+            resizable: false,
+            draggable: true,
+        @if (subscriptionType == 2) {<text>
+            actions: ["Refresh", "Close"],
+         </text> }
+            close: onCloseInvoiceDialog
+        }).data("kendoWindow");
+
+        dialog.center();
+        if ($(window).height() <= 576) {
+            dialog.setOptions({ position: { top: '10%' }});
+        }
+        dialog.open();
+        $("#initInvoiceBtn").prop('disabled', true);
+
+    }
+
+    function closeInvoiceDialog() {
+        $(this).closest("[data-role=window]").data("kendoWindow").close();
+    }
+
+    function onCloseInvoiceDialog(e) {
+        $("#initInvoiceBtn").prop('disabled', false);
+    }
+
+@if (subscriptionType == 2) {<text>
+    function payNupgrade() {
+        var newUrl = "@(Url.Action("PayNUpgrade", "Auth"))";
+        if (!$("#initInvoiceBtn").is(':disabled')) { return; }
+        $.ajax({
+            type: "POST",
+            url: newUrl,
+            success: function (msg) {
+                if (msg != null) {
+                    if (msg != null && msg.success == true) {
+                        ce.notifySuccess(msg.message);
+                        setTimeout("window.location.href = '@(Url.Action("Index", "Home"))'", 5000);
+                    }
+                    else {
+                        ce.notifyError(msg.message);
+                    }
+                } else {
+                    ce.notifyError("Something went wrong. Try again later");
+                }
+            }
+        });
+
+
+
+    }
+</text>}
+</script>

@@ -1,0 +1,127 @@
+@model CEMVC.FrontEnd.Web.Models.Auth.LoginModel
+@{
+    Layout = "~/Views/Shared/_Layout.responsive.cshtml";
+    ViewBag.Title = "Log in";
+    ViewBag.PageName = "Login";
+}
+@section extraJS {
+    <script src="https://www.google.com/recaptcha/api.js?onload=onCaptchaLoaded&render=explicit" async defer></script>
+}
+<div style="height: 56px; height: 6vh;" class="ce hidden-sm hidden-xs hidden-print"></div>
+<div class="row row-no-gutters">
+    <div class="col-6 col-md-6">
+        <div class="panel ce-sign-in panel-default @(ViewData.ModelState.IsValid ? "" : "panel-danger")">
+            <div class="panel-heading">
+                <h2 class="_heading">Sign In</h2>
+                @Html.ValidationMessageFor(m => m, "", new { @class = "_validation-message" })
+            </div>
+            <div class="panel-body">
+                @using (Html.BeginForm("Login", "Auth", new { returnUrl = ViewBag.ReturnUrl }, FormMethod.Post, new { id = "formLogon", @class = "k-form" }))
+                {
+                    @Html.AntiForgeryToken()
+                    @Html.HiddenFor(model => model.LoginTime) @Html.HiddenFor(model => model.ClientTimeOffset)
+                    <div class="k-form-field">
+                        <label for="inputEmail" class="k-label">Email address</label>
+                        @Html.TextBoxFor(m => m.Email, new { id = "inputEmail", placeholder = "", @class = "k-textbox k-input", required = true, autocomplete = "username", @oninput = "this.value = this.value.trim();" })
+                        @Html.ValidationMessageFor(m => m.Email)
+                    </div>
+                    <div class="k-form-field">
+                        <label for="inputPassword" class="k-label">Password</label>
+                        @Html.PasswordFor(m => m.Password, new { id = "inputPassword", placeholder = "", @class = "k-textbox k-input", required = true, autocomplete = "current-password" })
+                        @Html.ValidationMessageFor(m => m.Password)
+                    </div>
+                    if (Model != null && Model.ReCaptchaRequired)
+                    {
+                        <div id="g-captcha-widget" class="g-recaptcha k-form-field"></div>
+                    }
+                    <button class="btn btn-lg btn-block _signin @(Model.ReCaptchaRequired ? "k-state-disabled" : "")" type="submit" id="loginButton"><span class="fas fa-key ce-icon _icn _left"></span> Sign in &nbsp;</button>
+                    <div class="_forgot text-center">
+                        <i class="fas fa-user-lock text-info ce-icon"></i> &nbsp; <a href="@Url.Action("ForgotPassword", new { returnUrl = ViewBag.ReturnUrl })">Forgot your password?</a> &nbsp;
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-6"><div class="panel-body ce-sign-up-preamble">
+    <h3 class="text-info _heading">Not a Member?</h3>
+    <h4 class="text-info">A Clear Estimates subscription gives you access to:</h4>
+    <ul>
+        <li>
+            Over 12,000 Parts for all aspects of Residential Remodeling, Restoration and Handyman work, powered and updated by RemodelMAX
+        </li>
+        <li>
+            Over 100 templates for common estimates like Kitchens, Bathrooms, Additions, Roofs, Decks and many more!
+        </li>
+        <li>
+            Professional looking estimates to help you close more jobs
+        </li>
+        <li>
+            100% free support via phone, chat, email and our state of the art Knowledge Base
+        </li>
+    </ul>
+    <div class="form-group">
+        <a class="btn btn-lg _signup btn-block center-block" href="http://www.clearestimates.com/subscribe-now/"><span class="fas fa-user-plus ce-icon _icn _left"></span> Sign Up &nbsp;</a>
+    </div>
+    <p class="lead text-info">
+        Took some time off and looking to resubscribe? <a href="https://www.clearestimates.com/checkout/?ce-plan=resubscribe_ce-monthly" class="ce-text-caution" target="_self">Click here!</a>
+    </p>
+</div>
+    </div>
+</div>
+<script type="text/javascript">
+    var onCaptchaLoaded = function () { };
+
+    var LoginOperations = (function () {
+
+        function LoginOperations() {
+        }
+
+        var loginButton = $("#loginButton");
+
+        LoginOperations.prototype.disableLogin = function () {
+            loginButton.prop('disabled', true);
+            loginButton.addClass('k-state-disabled');
+        }
+
+        LoginOperations.prototype.enableLogin = function () {
+            loginButton.prop('disabled', false);
+            loginButton.removeClass('k-state-disabled');
+        }
+
+        return LoginOperations;
+    })();
+
+    var loginOps = new LoginOperations();
+
+    $(function () {
+        $("#formLogon").submit(function () {
+            $("#LoginTime").val(new Date().toString());
+            $("#ClientTimeOffset").val(new Date().getTimezoneOffset());
+            $("#formLogon").validate();
+            if ($("#formLogon").valid()) {
+                $('#loginButton').find('.ce-icon').removeClass('fa-key').addClass('fa-spinner ce-spinning');
+                $("#formLogon").addClass('k-state-disabled');
+            }
+        });
+
+        //KissMetrics events
+        if (window._kmq)
+            _kmq.push(['trackSubmit', '#formLogon', 'SITE_LOGON']);
+    });
+</script>
+@if (Model.ReCaptchaRequired)
+{
+    <script>
+        var onCaptchaLoaded = function () {
+            loginOps.disableLogin();
+            grecaptcha.render('g-captcha-widget',
+                {
+                    'sitekey': '@System.Web.Configuration.WebConfigurationManager.AppSettings["reCaptchaPublicKey"]',
+                    'callback': loginOps.enableLogin,
+                    'expired-callback': loginOps.disableLogin
+                });
+
+        }
+    </script>
+}
+

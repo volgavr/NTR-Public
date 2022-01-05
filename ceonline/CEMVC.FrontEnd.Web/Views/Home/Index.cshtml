@@ -1,0 +1,287 @@
+﻿@using System.Globalization
+@using System.Linq
+@using System.Web.Helpers
+@using CEMVC.FrontEnd.Web.Models.Home
+@model CEMVC.FrontEnd.Web.Models.Home.HomeViewModel
+@{
+    ViewBag.Title = "Clear Estimates";
+    Layout = "~/Views/Shared/_Layout.responsive.cshtml";
+    ViewBag.PageName = "Home";
+
+    var splitter = ViewBag.ProjectCustomerSplitter as string;
+    var splitterArr = new string[] { splitter };
+    var customersAndProjects = Model.Customers.Concat(Model.RecentProjects);
+}
+@section pageHeading {
+<div class="container _lg ce-mb"></div>
+}
+<style>
+    /*.row {
+        margin: 20px;
+    }*/
+
+    #projectsGrid {
+        border: none;
+        margin: 10px 10px 10px 0;
+        margin-right: 0 !important;
+        height: 100%;
+    }
+
+    #selectedCustomer {
+        margin: 10px 0 10px 0;
+    }
+
+    .recent-projects .k-grid .k-header {
+        display: none;
+    }
+
+    .recent-projects .k-grid tbody td {
+        padding: .5385em .3em;
+    }    
+
+
+
+    .rightPartCustomers .content-container {
+        margin: 20px 30px 20px 20px;
+    }
+
+    .button-std {
+        background-image: url('../../Images/but_gray.png');
+    }
+
+    .content-container input[type="button"] {
+        font-weight: normal;
+        text-decoration: none;
+        margin: 0px;
+        height: 35px;
+        border-radius: 5px;
+    }
+
+    .customer-img {
+        vertical-align: middle;
+        height: 20px;
+        margin: 5px;
+    }
+
+    input[type="button"].newProject {
+        background-position: 15% 50%, top;
+        background-position-x: 15%, center;
+        background-position-y: 50%, top;
+        border: 1px solid #CCC;
+        width: 40%;
+    }
+    /*#homePageContent .k-autocomplete {
+        height: 35px;
+    }
+
+    #homePageContent .k-autocomplete .k-input {
+        height: 28px;
+    }*/
+</style>
+<script>
+    var projects = @Html.Raw(Json.Encode(customersAndProjects));
+    var top5projects = @Html.Raw(Json.Encode(Model.RecentProjects.Take(5)));
+    var projectCustomerSplitter = '@splitter';
+
+    function showAddNewProjectWindow() {
+        var wndEl = $('<div id="addNewProjectWindow"></div>');
+        $("#homePageContent").append(wndEl);
+        wndEl.kendoWindow({
+            modal: true,
+            draggable: true,
+            minHeight:100,
+            minWidth:200,
+            visible: false,
+            title: "New project",
+            refresh: function() {this.center();},
+            close: function (e) {
+                this.destroy();
+            },
+            open: function() {
+                wndEl.html('<div class="k-loading-mask" style="left: 0px; top: 0px; width: 100%; height: 100%; background-color: white;">' +
+                              '<div class="k-loading-image" style="position: fixed;padding-top: 10px;padding-bottom: 25px;">' +
+                                  '<h5 style="margin-top: 15%; margin-left: 35%; color: #808080;">Loading...</h5>' +
+                              '</div>' +
+                              '<div class="k-loading-color"></div>' +
+                    '</div>');
+                if ($(window).width() < 800 || $(window).height() < 600) {
+                    this.maximize();
+                }
+            }
+        });
+        wndEl.data("kendoWindow").center().open();
+        $.ajax({
+            url: '@Url.Action("AddNewProject", "Home")',
+            success: function(data) {
+                $("#addNewProjectWindow").html(data);
+                $("#addNewProjectWindow").data("kendoWindow").refresh();
+            }
+        });
+    }
+
+    function filterProjects(customerId) {
+        var grid = $('#projectsGrid').data('kendoGrid');
+
+        var filtered = $.grep(projects, function(n, i) {
+            return (n.CustomerId === customerId &&  n.Id > 0);
+        });
+        grid.dataSource.data(filtered);
+    }
+
+    function clearProjectsFilter() {
+        $("#selectedCustomer").html('');
+        var grid = $('#projectsGrid').data('kendoGrid');
+        grid.dataSource.data(top5projects);
+    }
+
+    function extractData (str, index) {
+        return $.trim(str.split(projectCustomerSplitter)[index] || '');
+    }
+
+    function onSearchResultSelect(e) {
+        var dataItem = this.dataItem(e.item.index());
+        var customer = extractData(dataItem['Text'], 0);
+
+        this.hasSelected = true;
+        if (dataItem['Id'] === 0) {
+            var template = kendo.template($("#customerTemplate").html());
+            $("#selectedCustomer").html(template({
+                name : customer,
+                id: dataItem['CustomerId']
+            }));
+            var customerId = dataItem['CustomerId'];
+            filterProjects(customerId);
+        } else {
+            $('#homePageLoader').show();
+            window.location = '@Url.Action("Project", "Home")/' + dataItem['Id'];
+        }
+    }
+
+    function onSearchResultClose() {
+        if (this.hasSelected === true){
+            this.value(null);
+            this.hasSelected = false;
+        }
+    }
+    function navigateTo(url) {
+        $('#homePageLoader').show();
+        window.location = url;
+    }
+</script>
+@Html.AntiForgeryToken()
+<script type="text/x-kendo-template" id="searchCustomerOrProjectItemTemplate">
+    # if (extractData(Text,1) === 'null') {#
+        <i class="fas fa-user-circle _icn _left _success"></i>#= extractData(Text,0)#
+    #} 
+    else{#
+        <i class="fas fa-briefcase _icn _left _primary"></i>#= extractData(Text,0)#&nbsp;-&nbsp;#=extractData(Text,1)#
+    #}
+    #
+</script>
+<script type="text/x-kendo-template" id="customerTemplate">
+    <i class="ce-icon fas fa-user-circle _icn _left _success"></i><a href='@Url.Action("Customer", "Home")?customerId=#=id#'>#: name #</a>
+    <a class="clear-filter k-button-icon" href="javascript:void(0);" onclick="clearProjectsFilter(event);"><span class="k-icon k-i-close-circle ce-icon ce-icon-md"></span></a>
+</script>
+<div class="row">
+    <div class="col-md-6">
+        <div id="homePageContent" class="panel panel-info ce-home-recent">
+            <div class="panel-heading _heading k-display-flex k-align-items-start k-justify-content-between" id="customerDataLabel">
+                <div class="h3 _title text-primary">Select recent or search</div>
+                <div class="ce-dashboard-item dropdown">
+                    <span role="button" class="fa-stack fa-2x ce-dashboard-icon dropdown-toggle ce-clickable" style="font-size:16px" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" aria-disabled="false"><i class="fas fa-circle fa-stack-2x"></i><i class="fas fa-ellipsis-h fa-stack-1x fa-inverse _more"></i></span><span class="_text dropdown-toggle ce-clickable" aria-haspopup="true" aria-expanded="false" aria-disabled="false" data-toggle="dropdown" id="homeMoreActionsBtn">More</span>
+                    <ul class="ce dropdown-menu dropdown-menu-right">
+                        <li><a href="@Url.Action("ExportCustomerData", "ImportExport")" class="ce-text-primary">Export All Customers to CSV</a></li>
+                        <li><a href="@Url.Action("ExportProjectData", "ImportExport")" class="ce-text-primary">Export All Customer Projects to CSV </a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div class="d-flex _toolbar k-align-items-center k-justify-content-between k-flex-nowrap k-form">
+                    <div class="_input">
+                        @(Html.Kendo().AutoComplete()
+                                                .Name("customerOrProjectSearchAutocomplete")
+                                                .Placeholder("Customer or project...")
+                                                .DataTextField("Text")
+                                                .Events(e => e.Select("onSearchResultSelect").Close("onSearchResultClose"))
+                                                .TemplateId("searchCustomerOrProjectItemTemplate")
+                                                .Filter(FilterType.Contains)
+                                                .BindTo(customersAndProjects))
+                    </div>
+                    <button type="button" class="_button k-button ce-btn-icontext" id="newProjectButton" title="New Project"><span class="ce-icon ce-icon-md _left fas fa-plus-circle ce-icon-success"></span><span class="ce-text-nobr-ellipsis">New Project</span></button>
+                </div>
+                <div class="recent-projects">
+                    <div id="selectedCustomer"></div>
+                    @(Html.Kendo().Grid<HomePageProject>()
+                                          .Name("projectsGrid")
+                                          .Columns(columns =>
+                                          {
+                                               columns.Bound(c => c.Text).Template(@<text><i class="fas fa-user-circle _icn _left _success"></i><a href="@Url.Action("Customer", "Home")?customerId=@item.CustomerId&projectId=@item.Id@(Model.showArchived ? "&showArchived=true" : "")">@item.Text.Split(splitterArr, StringSplitOptions.None)[0]</a>&nbsp;&ndash;&nbsp;<a href="@Url.Action("Project", "Home")/@item.Id">@item.Text.Split(splitterArr, StringSplitOptions.None)[1]</a></text>)
+                                                .ClientTemplate("<i class='fas fa-user-circle _icn _left _success'></i><a href='" + Url.Action("Customer", "Home") + "?customerId=#=CustomerId#&projectId=#=Id#'>#=extractData(Text,0)#</a>&nbsp;-&nbsp;<a href='" + Url.Action("Project", "Home") + "/#=Id#'>#=extractData(Text,1)#</a>");
+                                          })
+                                  .EnableCustomBinding(true)
+                                  .BindTo(Model.RecentProjects.Take(5))
+                    )
+                </div>
+                <div class="ce-label-wrap">
+                    <label class="ce-label-checkbox"><input type="checkbox" name="showArchived" value="true" id="showArchived" checked="@Model.showArchived"><span class="glyphicon ce-checkmark ce-checkmark-w-b-r" aria-hidden="true"></span><strong>@Html.DisplayNameFor(o => o.showArchived)</strong></label>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Watch a tutorial video</h3>
+            </div>
+            <div class="panel-body">
+                @if (User.Identity.Name.EndsWith("@housedoctors.com"))
+                {
+                    <script src="https://fast.wistia.com/embed/medias/uet098puua.jsonp" async></script>
+                    <script src="https://fast.wistia.com/assets/external/E-v1.js" async></script>
+                    <div class="wistia_responsive_padding" style="padding:62.5% 0 0 0;position:relative;">
+                        <div class="wistia_responsive_wrapper" style="height:100%;left:0;position:absolute;top:0;width:100%;">
+                            <span class="wistia_embed wistia_async_uet098puua popover=true popoverAnimateThumbnail=true videoFoam=true" style="display:inline-block;height:100%;position:relative;width:100%">&nbsp;</span>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <script src="https://fast.wistia.com/embed/medias/0dslz1e15c.jsonp" async></script>
+                    <script src="https://fast.wistia.com/assets/external/E-v1.js" async></script>
+                    <div class="wistia_responsive_padding" style="padding: 46.56% 0 0 0; position: relative;">
+                        <div class="wistia_responsive_wrapper" style="height: 100%; left: 0; position: absolute; top: 0; width: 100%;">
+                            <span class="wistia_embed wistia_async_0dslz1e15c popover=true popoverAnimateThumbnail=true videoFoam=true" style="display: inline-block; height: 100%; width: 100%">&nbsp;</span>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+<div id="homePageLoader" class="k-loading-mask" style="left: 0px; top: 0px; width: 100%; height: 100%; z-index: 10013; display: none; background-color: #ffffff; background-color: rgba(255,255,255,0.7);">
+    <div class="k-loading-image">
+        <h5 style="margin-top: 33%; text-align: center; color: #808080;">Loading...</h5>
+    </div>
+    <div class="k-loading-color"></div>
+</div>
+<script>
+    $(function () {
+        $('.clear-filter').click(clearProjectsFilter);
+        $('#newProjectButton').click(showAddNewProjectWindow);
+        $("#showArchived").change(showHideArchived);
+        $('#projectsFilter').keypress(function(e) {
+            if(e.which === 13) {
+                filterProjects();
+            }
+        });
+    });
+
+    function showHideArchived(evt)
+    {
+        var chbox = $(this);
+        if (chbox.is('[type=checkbox]')) {
+            chbox.closest("form").removeClass('dirty');
+            window.location = "@(Url.Action("Index", "Home"))?showArchived=" + chbox.prop("checked");
+        }
+    }
+</script>

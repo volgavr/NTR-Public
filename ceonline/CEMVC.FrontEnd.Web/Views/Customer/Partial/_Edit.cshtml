@@ -1,0 +1,105 @@
+﻿@using CEMVC.FrontEnd.Web.Models;
+@model CEMVC.FrontEnd.Web.Models.CustomerEditModel
+@{ var noPhones = Model.Phones.All(n => string.IsNullOrEmpty(n.Value));
+   var noEmails = Model.Emails.All(n => string.IsNullOrEmpty(n.Value));
+}
+@using (Html.BeginForm("EditSave", "Customer", FormMethod.Post, new { id = "customerEditForm", autocomplete = "off", @class = "k-form" }))
+{
+    @Html.HiddenFor(m => m.Id, new { id = "customerEditModel_Id" })
+    <div class="row">
+        <div class="col-sm-6 k-form-field">
+            @Html.LabelFor(o => o.FirstName, new { @class = "k-label" })
+            @Html.TextBoxFor(o => o.FirstName, new { @class = "k-textbox k-input", maxlength = 50, tabindex = 10 })
+        </div>
+        <div class="col-sm-6 k-form-field">
+            @Html.LabelFor(o => o.LastName, new { @class = "k-label" })
+            @Html.TextBoxFor(o => o.LastName, new { @class = "k-textbox k-input", maxlength = 50, tabindex = 20 })
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-6 k-form-field">
+            @Html.LabelFor(o => o.SecondaryFirstName, new { @class = "k-label" })
+            @Html.TextBoxFor(o => o.SecondaryFirstName, new { @class = "k-textbox k-input", tabindex = 30 })
+        </div>
+        <div class="col-sm-6 k-form-field">
+            @Html.LabelFor(o => o.SecondaryLastName, new { @class = "k-label" })
+            @Html.TextBoxFor(o => o.SecondaryLastName, new { @class = "k-textbox k-input", tabindex = 40 })
+        </div>
+    </div>
+    <div class="k-form-field">
+        @Html.LabelFor(o => o.Address, new { @class = "k-label" })
+        @Html.TextBoxFor(o => o.Address, new { @class = "k-textbox k-input", tabindex = 50 })
+    </div>
+    <div class="row">
+        <div class="col-sm-4 col-xs-6 k-form-field">
+            @Html.LabelFor(o => o.City, new { @class = "k-label" })
+            @Html.TextBoxFor(o => o.City, new { @class = "k-textbox k-input", tabindex = 60 })
+        </div>
+        <div class="col-sm-4 col-xs-6 k-form-field">
+            @Html.LabelFor(o => o.State, new { @class = "k-label" })
+            @Html.TextBoxFor(o => o.State, new { @class = "k-textbox k-input", tabindex = 70, autocomplete = "off" })
+        </div>
+        <div class="col-sm-4 col-xs-6 k-form-field">
+            @Html.LabelFor(o => o.Zip, new { @class = "k-label" })
+            @Html.TextBoxFor(o => o.Zip, new { @class = "k-textbox k-input", tabindex = 80 })
+        </div>
+    </div>
+    <div class="row form-horizontal">
+        <div class="col-sm-6 _contacts" data-scope="contact_fieldset">
+            <label class="k-label">Phone:</label>
+            @for (int i = 0; i < Model.Phones.Count(); i++)
+            {
+                <div class="row k-form-field collapse @(!string.IsNullOrEmpty(Model.Phones[i].Value) || i == 0 && noPhones ? "in" : "")" id="contact_phone_@i">
+                    <div class="col-xs-9 col-sm-8 position-relative">
+                        @Html.TextBoxFor(m => Model.Phones[i].Value, new { @class = "k-textbox k-input", tabindex = 81 + i })
+                        @Html.HiddenFor(m => Model.Phones[i].Label)
+                        @*<span class="k-link k-link-clear" aria-label="Clear the Search" style="position:absolute; top: 0.428em; right:1.5em"><span unselectable="on" class="k-icon k-i-close"></span></span>*@
+                    </div>
+                    <div class="col-xs-3 col-sm-4 _label _right dropdown" data-scope="contact_label_toggle">
+                        <a href="#" class="_toggle dropdown-toggle ce-text-nobr" role="link" id="_phone_label_toggle_@i" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            @Model.Phones[i].Label<span class="k-icon k-i-arrow-s" role="presentation"></span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-right" aria-labelledby="_phone_label_toggle_@i">
+                            <li><a class="dropdown-item" href="#" data-field="contact_phone_0" data-option-for="@Html.IdFor(m => Model.Phones[i].Label)" data-option-val="Home">Home</a></li>
+                            <li><a class="dropdown-item" href="#" data-field="contact_phone_1" data-option-for="@Html.IdFor(m => Model.Phones[i].Label)" data-option-val="Business">Business</a></li>
+                            <li><a class="dropdown-item" href="#" data-field="contact_phone_2" data-option-for="@Html.IdFor(m => Model.Phones[i].Label)" data-option-val="Mobile">Mobile</a></li>
+                            <li><a class="dropdown-item" href="#" data-field="contact_phone_3" data-option-for="@Html.IdFor(m => Model.Phones[i].Label)" data-option-val="Fax">Fax</a></li>
+                            <li><a class="dropdown-item" href="#" data-field="contact_phone_4" data-option-for="@Html.IdFor(m => Model.Phones[i].Label)" data-option-val="Other">Other</a></li>
+                        </ul>
+                    </div>
+                </div>
+            }
+            <a href="#addPhone" id="morePhonesBtn" class="_toggle" role="button" aria-disabled="false">+ Add Phone</a>
+        </div>
+        <div class="col-sm-6 _contacts" data-scope="contact_fieldset">
+            <label class="k-label">Email:</label>
+            @for (int i = 0; i < Model.Emails.Count; i++)
+            {
+                <div class="row k-form-field collapse @(!string.IsNullOrEmpty(Model.Emails[i].Value) || i == 0 && noEmails ? "in" : "")" id="contact_email_@i">
+                    <div class="col-xs-9 col-sm-8">
+                        @Html.TextBoxFor(m => m.Emails[i].Value, new { @class = "k-textbox k-input", tabindex = 90 + i })
+                        @Html.HiddenFor(m => Model.Emails[i].Label)
+                    </div>
+                    <div class="form-group col-xs-3 col-sm-4 _label dropdown" data-scope="contact_label_toggle">
+                        <a href="#" class="_toggle dropdown-toggle ce-text-nobr" role="link" id="_email_label_toggle_@i" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            @Model.Emails[i].Title <span class="k-icon k-i-arrow-s" role="presentation"></span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-right" aria-labelledby="_email_label_toggle_@i">
+                            <li><a class="dropdown-item" href="#" data-field="contact_email_0" data-option-for="@Html.IdFor(m => Model.Emails[i].Label)" data-option-val="@EmailContactEnum.Personal" data-option-label="Personal">Personal</a></li>
+                            <li><a class="dropdown-item" href="#" data-field="contact_email_1" data-option-for="@Html.IdFor(m => Model.Emails[i].Label)" data-option-val="@EmailContactEnum.Business" data-option-label="Business">Business</a></li>
+                            <li><a class="dropdown-item" href="#" data-field="contact_email_2" data-option-for="@Html.IdFor(m => Model.Emails[i].Label)" data-option-val="@EmailContactEnum.InstantMessenger" data-option-label="Messenger">Messenger</a></li>
+                            <li><a class="dropdown-item" href="#" data-field="contact_email_3" data-option-for="@Html.IdFor(m => Model.Emails[i].Label)" data-option-val="@EmailContactEnum.Other" data-option-label="Other">Other</a></li>
+                        </ul>
+                    </div>
+                </div>
+            }
+            <a href="#addEmail" id="moreEmailsBtn" class="_toggle" role="button" aria-disabled="false">+ Add Email</a>
+        </div>
+    </div>
+    <div class="k-form-field">
+        @Html.LabelFor(o => o.Notes, new { @class = "k-label" })
+        <span class="k-textarea" style="width:100%; display:block">
+            @Html.TextAreaFor(o => o.Notes, new { id = "customer_notes_input", @class = "k-input", style = "width:100%; resize: vertical; max-height:5em; min-height:2em" })
+        </span>
+    </div>
+}

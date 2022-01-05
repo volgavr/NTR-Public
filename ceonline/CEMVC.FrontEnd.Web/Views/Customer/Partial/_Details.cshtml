@@ -1,0 +1,137 @@
+﻿@model CEMVC.FrontEnd.Web.Models.CustomerViewModel
+@{ 
+    bool isProUser = DependencyResolver.Current.GetService<CEMVC.Core.BLL.Infrastructure.IUserSecurity>().IsPro();
+}
+<div class="panel-heading _heading">
+    @Html.HiddenFor(m => m.Id, new { id = "CustomerViewModel_Id" })
+    <div class="row _flexy">
+        <div class="col">
+            <div class="h3 _title @(Model.IsArchived ? "text-muted" : "text-primary") ce-icon-line">
+                <span class="ce-icon ce-icon-md fas fa-user @(Model.IsArchived ? "text-muted" : "text-primary")" role="presentation"></span> @Model.FullName @(Model.IsArchived ? "(ARCHIVED)" : "")
+            </div>
+            @if (!string.IsNullOrWhiteSpace(Model.FullNameAlt))  {
+                <div class="h5 _subtitle">
+                    <span class="ce-icon _icn _left fas fa-user ce-icon-sm text-primary" role="presentation"></span> @Model.FullNameAlt
+                </div>  }
+        </div>
+        <div class="col-md-3 col-sm-4 text-right justify-content-xs-around">
+            <a href="#editCustomer" class="ce-dashboard-item" role="menuitem" id="editCustomerLink"><span class="fa-stack fa-2x ce-dashboard-icon"><i class="fas fa-circle fa-stack-2x"></i><i class="fas fa-pen fa-stack-1x fa-inverse"></i></span><span class="_text">Edit</span></a>
+            <div class="ce-dashboard-item dropdown">
+                <span role="button" class="fa-stack fa-2x ce-dashboard-icon dropdown-toggle ce-clickable" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" aria-disabled="false"><i class="fas fa-circle fa-stack-2x"></i><i class="fas fa-ellipsis-h fa-stack-1x fa-inverse _more"></i></span><span class="_text dropdown-toggle ce-clickable" aria-haspopup="true" aria-expanded="false" aria-disabled="false" data-toggle="dropdown" id="customerMoreActionsBtn">More</span>
+                <ul class="dropdown-menu dropdown-menu-right" aria-labelledby="customerMoreActionsBtn">
+                    @if (isProUser)
+                    {
+                    <li><a href="#sendToZapier" id="sendCustomerToZapierLink" class="ce-text-primary" role="menuitem" @(Model.ZapierSentDate.HasValue ? "data-already-sent=\"true\"" : "")>Send to Zapier</a></li>
+                    }
+                    else
+                    {
+                        <li><a href="#sendToZapierPro" id="sendCustomerToZapierLink" class="ce-text-primary">Send to Zapier <span class="k-badge k-badge-solid k-badge-warning k-badge-md k-badge-rounded">Pro</span></a></li>
+                    }
+                    <li><a href="#archiveCustomer" class="ce-text-caution @(Model.IsArchived ? "k-state-disabled": null)" id="archiveCustomerLink" role="menuitem" data-role="action">Archive Customer</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="panel-body">
+@if (Model.IsArchived)
+{
+    <div class="alert alert-warning">Customer is archived. <strong>If you want to restore, edit it and then save</strong></div>
+}
+@if (!string.IsNullOrWhiteSpace(Model.Address.ToString()))
+{
+    <p class="_address">
+        <span class="k-icon k-i-marker-pin _icn _primary _left"></span> @Model.Address.ToString()
+    </p>
+}
+    <div class="row _contacts">
+        @if (Model.Phones.Any())
+        {
+            <div class="col-sm-6">
+                <div class="ce-media-block">
+                    <span class="glyphicon glyphicon-earphone _icn _primary" aria-hidden="true"></span>
+                    <div class="ce-media-content">
+                        <ul class="list-unstyled small">
+                            @foreach (var pho in Model.Phones)
+                            {
+                                <li>@pho.Value <span class="text-muted">@pho.Key</span></li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        }
+        @if (Model.Emails.Any())
+        {
+            <div class="col-sm-6">
+                <div class="ce-media-block">
+                    <span class="k-icon k-i-email _icn _primary _left"></span>
+                    <div class="ce-media-content">
+                        <ul class="list-unstyled small">
+                            @foreach (var eml in Model.Emails)
+                            {
+                                <li>@eml.Value <span class="text-muted">@eml.Key</span></li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+    @if (!string.IsNullOrWhiteSpace(Model.Notes))
+    {
+        <div class="_notes"><h6 class="text-muted">Customer Notes</h6><p>@Model.Notes</p></div>
+    }
+
+    @if (!Model.IsArchived)
+    {
+        <section title="Projects">
+            <div class="breadcrumb ce-text-bold">Customer Projects</div>
+            <form class="k-form" id="currentProjectListOptionsForm">
+                <div class="d-flex k-align-items-center k-justify-content-between k-flex-nowrap">
+                        <span class="inline-item ce-label-wrap" style="padding-right:1em">
+                            <label class="ce-label-checkbox"><input type="checkbox" name="showArchivedProjects" value="true" onchange="customerProjectListOptionsChange(event)"><span class="glyphicon ce-checkmark ce-checkmark-w-b-r" aria-hidden="true"></span> Show Archived</label>
+                        </span>
+                        <a href="@Url.Action("CreateNewProject", "Customer", new { customerId = Model.Id })" class="k-button ce-btn-icontext" id="createProjectBtn"><span class="ce-icon ce-icon-md _left fas fa-plus-circle ce-icon-success"></span><span class="ce-text-nobr-ellipsis">New Project</span></a>
+                </div>
+            </form>
+            @(Html.Kendo().Grid<CEMVC.FrontEnd.Web.Models.ProjectListViewModel>()
+                                                            .Name("project_list")
+                                                            .Columns(columns =>
+                                                            {
+                                                                columns.Bound(c => c.Title).HtmlAttributes(new { @class = "ce-clickable" });
+                                                                //columns.Bound(c => c.Cost).Width(100).Media("(min-width: 768px)").HtmlAttributes(new { @class = "text-right ce-clickable" });
+                                                                columns.Command(command =>
+                                                                {
+                                                                    command.Custom("load").TemplateId("customer_project_load_tmpl");
+                                                                    command.Custom("duplicate").TemplateId("customer_project_duplicate_tmpl");
+                                                                    command.Custom("archive").TemplateId("customer_project_archive_tmpl").Click("customerProjectLoadClick");
+                                                                }).Width(140).HtmlAttributes(new { @class = "text-right" });
+                                                            })
+                                                            .HtmlAttributes(new { @class = Request.Browser.IsMobileDevice ? "no-scrollbar" : "" })
+                                                            .Scrollable(sc => sc.Virtual(true).Height(340))
+                                                            .NoRecords("No Projects Assigned to this Customer")
+                                                                            .Events(ev => ev.DataBound("customerProjectListDataBound"))
+                                                                            .DataSource(ds => ds
+                                                                                .Ajax()
+                                                                                .Model(model =>
+                                                                                {
+                                                                                    model.Id(p => p.Id);
+                                                                                })
+                                                                                .Read(read => read.Action("Projects", "Customer").Data("customerProjectListData"))
+                                                                                .ServerOperation(true)
+                                                                                .PageSize(20)
+                                                                            )
+            )
+        </section>
+    }
+    <script type="text/x-kendo-tmpl" id="customer_project_load_tmpl">
+        <button type="button" class="ce-icon-btn border-0 k-grid-load ce-btn-clear" title="Load Project"><span class="ce-icon fas fa-folder-open _primary"></span></button>
+    </script>
+    <script type="text/x-kendo-tmpl" id="customer_project_duplicate_tmpl">
+        <button type="button" class="ce-icon-btn border-0 k-grid-copy ce-btn-clear" title="Duplicate Project"><span class="ce-icon fas fa-clone _primary"></span></button>
+    </script>
+    <script type="text/x-kendo-tmpl" id="customer_project_archive_tmpl">
+        <button type="button" class="ce-icon-btn border-0 k-grid-archive ce-btn-clear" title="Archive Project"><span class="ce-icon fas fa-archive _caution"></span></button>
+    </script>
+</div>

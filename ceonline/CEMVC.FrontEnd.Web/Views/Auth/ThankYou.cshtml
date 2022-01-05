@@ -1,0 +1,44 @@
+﻿@using ChargeBee.Models;
+@{
+    ViewBag.Title = "Thank You";
+    var show = ViewBag.ShowRefersion;
+}
+@if (show == "yes")
+{
+<!-- REFERSION TRACKING: BEGIN -->
+<script src="//clearestimates1.refersion.com/tracker/v3/pub_9f841973b123cb1b1af4.js">
+</script><script>function rfsn_getQS(e){e=e.replace(/[\[]/,"\\[").replace(/[\]]/,"\\]");var t=new RegExp("[\\?&]"+e+"=([^&#]*)"),n=t.exec(location.search);return n==null?"":decodeURIComponent(n[1].replace(/\+/g," "))}
+if (rfsn_getQS('rfsn_ci')) {
+	_refersion(function(){ 
+		_rfsn._addCart(rfsn_getQS('rfsn_ci'));
+		_rfsn._setSource("CHARGEBEE");
+	});}</script>
+<!-- REFERSION TRACKING: END -->
+}
+ <h2 class="text-center"> You have been successfully subscribed. </h2> @* style="font-size: 30px; margin: 40px;"*@
+<div class="col-sm-8 col-sm-offset-2 cb-spacing-bottom message-success">
+    @{if (ViewData.ContainsKey("status"))
+        {
+            {
+                if ((int)ViewData["status"] == (int)Subscription.StatusEnum.InTrial)
+                {
+            <span class="text-muted lead"> Your current subscription trial will end on  </span>
+            <span class="lead"> @(((DateTime)ViewData["trial_end"]).ToShortDateString()) </span>}
+                else if ((int)ViewData["status"] == (int)Subscription.StatusEnum.Active)
+                {
+            <span class="text-muted lead"> Your subscription will be renewed on </span>
+            <span class="lead"> @(((DateTime?)ViewData["current_term_end"]).Value.ToShortDateString())</span>
+            <br>  
+                    if (ViewData["remaining_billing_cycles"] != null)
+                    {
+               <span class="text-muted"> You subscription will be last for </span> 
+               <span class="lead"> @(((DateTime?)ViewData["remaining_billing_cycles"]).Value.ToShortDateString())</span>  }
+                }
+            }
+        }
+        else
+        {
+    <text>Thank you for subscription!</text>
+        }
+        }
+</div>
