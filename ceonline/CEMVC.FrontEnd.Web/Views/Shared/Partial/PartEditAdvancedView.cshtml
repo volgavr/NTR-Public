@@ -1,0 +1,1434 @@
+﻿@using CEMVC.Core.BLL.Enums;
+@model CEMVC.FrontEnd.Web.Models.Common.PartEditAdvancedModel
+@functions { 
+    public static HtmlString _checked(bool bVal)
+    {
+        return new HtmlString(bVal ? "checked" : "");
+    }
+
+    public static HtmlString _disabled(bool bVal)
+    {
+        return new HtmlString(bVal ? "disabled" : "");
+    }
+}
+@{
+    var displayDashboard = !ViewData.ContainsKey("EditorOptions") || ((CEMVC.FrontEnd.Web.Models.Common.EditorViewOptions)ViewData["EditorOptions"]).Dashboard;
+    var displayCategorySelect = ViewData.ContainsKey("EditorOptions") && ((CEMVC.FrontEnd.Web.Models.Common.EditorViewOptions)ViewData["EditorOptions"]).CategorySelector; ;
+    var displayMiscellaneous = !ViewData.ContainsKey("EditorOptions") || ((CEMVC.FrontEnd.Web.Models.Common.EditorViewOptions)ViewData["EditorOptions"]).Miscellaneous;
+    var displayReportTexts = !ViewData.ContainsKey("EditorOptions") || ((CEMVC.FrontEnd.Web.Models.Common.EditorViewOptions)ViewData["EditorOptions"]).ReportTexts;
+    //var compactView = Request.Cookies["partEditFormCollapsed"] != null && Request.Cookies["partEditFormCollapsed"].Value == "1";
+
+
+    var imageReadUrl = Model.ProjectId.HasValue ? Url.Action("GetProjectPartImage", "Project", new { projectPartId = Model.Id, width = 180, maxHeight = 150 }) : Url.Action("ReadImage", "Parts", new { partId = Model.Id, width = 180, maxHeight = 150 });
+    var imageSaveUrl = Model.ProjectId.HasValue ? Url.Action("SetProjectPartImage", "Project", new { projectPartId = Model.Id }) : Url.Action("UploadImage", "Parts", new { partId = Model.Id });
+    var imageDeleteUrl = Model.ProjectId.HasValue ? Url.Action("RemoveProjectPartImage", "Project") : Url.Action("DropImage", "Parts", new { partId = Model.Id });
+    var imageDefaultSrc = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+}
+<form id="partAdjustEditForm" method="post">
+    @Html.HiddenFor(m => m.Id, new { id = Model.ProjectId.HasValue ? "projectPartId" : "partId" })   @Html.HiddenFor(m => m.OriginalPartId)
+    <div class="row ce-part-adjust-dashboard-panel">
+        <div class="col-sm-@(displayDashboard ? "7" : "8")">
+            <label for="Description" class="control-label control-label-block" style="margin-top:10px">Description</label>
+            @*<div class="row-no-gutters">*@
+            <div class="form-group">
+                @Html.TextBoxFor(m => m.Title, new { @class = "k-textbox form-control", required = true })
+            </div>
+            @*</div>*@
+        </div>
+      @if(displayDashboard) {
+        <div class="col-sm-1 col-xs-3">
+
+          <div class="ce-dashboard-category text-center dropdown">
+              <i class="hidden-xs center-block" style="line-height:20px">&nbsp;</i>
+              <span class="center-block ce-dashboard-icon-d _info dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></span><a href="#" class="ce-label-link center-block small dropdown-toggle ce-text-blue _lnk visible-xs-block" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="categoryDropDownXSBtn">Info</a>
+                <ul class="dropdown-menu _persistent" aria-labelledby="categoryDropDownBtn" data-mode="0" data-scope="categoryData">
+                    <li class="dropdown-header ce-text-bold">Category:</li>
+                    <li class="_item form-group" data-depends-on=":parent[data-mode]" data-show-when="0" data-field="CategoryTitle">@Model.Category.Title</li>
+                    @if (Model.ProjectId == null)
+                    {
+                    <li class="_item hidden" data-depends-on=":parent[data-mode]" data-show-when="1">@if(Model.Id != 0) { 
+                        <div class="form-group" data-role="categoryOptions">
+                            @Html.Hidden("part_CategoryId", Model.Category.Id)
+                            <select id="partEdit_Category_Id" name="CategoryId" class="form-control" disabled></select>
+                        </div>
+                        } else { @Html.Hidden("CategoryId", Model.CategoryId, new { id = "n_part_CategoryId" }) }
+                    </li>
+                    }
+                    <li class="dropdown-header">Sub-Category:</li>
+                    <li class="_item form-group " data-depends-on=":parent[data-mode]" data-show-when="0" data-field="SubCategoryTitle">@(Model.SubCategory.Title ?? "(not defined)")</li>
+                    @if (Model.ProjectId == null)
+                    {
+                    <li class="_item hidden" data-depends-on=":parent[data-mode]" data-show-when="1">@if(Model.Id != 0) {
+                        <div class="form-group">
+                            @Html.Hidden("part_SubCategoryId", Model.SubCategory.Id)
+                            <select id="partEdit_SubCategory_Id" name="SubCategoryId" class="form-control" data-depends-on="partEdit_Category_Id" disabled></select>
+                        </div>
+                        } else { @Html.Hidden("SubCategoryId", Model.SubCategory.Id, new { id = "n_part_SubCategoryId" }) }
+                    </li>
+                    }
+                    <li class="dropdown-header">Group:</li>
+                    <li class="_item" data-depends-on=":parent[data-mode]" data-show-when="0" data-field="GroupTitle">@(Model.Group.Title ?? "(not defined)")</li>
+                    @if(Model.ProjectId == null) {
+                    <li class="_item hidden" data-depends-on=":parent[data-mode]" data-show-when="1">@if (Model.Id != 0) {
+                        <div class="form-group">
+                            @Html.Hidden("part_GroupId", Model.Group.Id)
+                            <select id="partEdit_Group_Id" name="GroupId" class="form-control" data-depends-on="partEdit_SubCategory_Id" disabled></select>
+                        </div>
+                        } else { @Html.Hidden("GroupId", Model.Group.Id, new { id = "n_part_GroupId" }) }
+                    </li>
+                        if (Model.Id != 0) {
+                    <li class="divider" role="separator" />
+                    <li class="text-center _action" data-depends-on=":parent[data-mode]" data-show-when="0"><a href="#" class="_lnk" role="button" data-action="edit" id="editCategoryBtn">edit</a></li>
+                    <li class="text-center _action hidden" data-depends-on=":parent[data-mode]" data-show-when="1"><a href="#" id="editCategoryCancelBtn" class="_lnk" role="button" data-action="cancel">cancel</a>
+                    <a href="#" class="_lnk" id="editCategorySaveBtn" role="button" data-action="done">save</a></li> }
+                    }
+                </ul>
+          </div>
+        </div>
+        <div class="col-sm-4 col-xs-9" id="dashboard">
+            <ul class="list-inline ce-dashboard row @(Model.Id == 0 ? "k-state-disabled" : "")">
+                <li role="presentation" class="col-xs-3 @(Model.IsFavorite.HasValue || Model.Id == 0 ? "" : "k-state-disabled")"><span class="center-block ce-dashboard-icon _fav @(Model.IsFavorite == true ? "active" : "")" aria-labelledby="favoriteLink"></span><a href="#" id="favoriteLink" class="_lnk">Favorite</a></li>
+                @if (Model.ProjectId.HasValue)
+                {
+                <li role="presentation" class="col-xs-3" id="copyPartItem"><span class="center-block ce-dashboard-icon _copy" role="button"></span><a href="#" class="_lnk" id="copyPartLink">Copy</a></li>
+                <li role="presentation" class="col-xs-3" id="movePartItem"><span class="center-block ce-dashboard-icon _move" role="button"></span><a href="#" class="_lnk" id="movePartLink">Move</a></li>
+                }
+                <li role="presentation" class="col-xs-3 dropdown">
+                    <span class="center-block ce-dashboard-icon-d _more" data-toggle="dropdown" aria-hidden="true"></span>
+                    <a href="#" class="_lnk dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="otherActionLink">More</a>
+                    <ul class="dropdown-menu dropdown-menu-right" aria-labelledby="otherActionLink" style="right:10px; min-width: 230px;">
+                        <li><a href="#deletePart" class="_dangerous" id="deletePartLink"><span class="ce-dashboard-icon pull-left _icn _drop"></span>Delete from @(Model.ProjectId.HasValue ? "Project" : "Catalog")</a></li>
+                        <li role="separator" class="divider"></li>
+                        <li class="@(Model.ProjectId.HasValue && Model.OriginalPartId.HasValue ? null : "k-state-disabled")"><a href="#revertPartLink" id="revertPartLink"><span class="ce-dashboard-icon pull-left _icn _revert"></span> Revert to Default Part</a></li>
+                        @if (Model.ProjectId.HasValue)
+                        {
+                        <li class="@(Model.OriginalPartId == null ? "k-state-disabled" : null)"><a href="@Url.Action("Index", "Parts")#@(Model.OriginalPartId.HasValue ? "editPart=" + Model.OriginalPartId : "")" id="libraryPartLink"><span class="ce-dashboard-icon pull-left _icn _open"></span> Open Part in Library</a></li>
+                        <li class="@(Model.OriginalPartId != null ? "k-state-disabled" : null)"><a href="#" id="saveAsNewPartLink"><span class="ce-dashboard-icon pull-left _icn _save"></span> Save as New Part in Library</a></li>
+                        }
+                    </ul>
+                </li>
+            </ul>
+        </div> }
+    </div>
+    <div class="row">
+        <div class="col-sm-8 part-adjust-main">
+        @if (displayCategorySelect)
+        {
+            <div class="row">
+                <div class="form-group col-sm-8"> @Html.HiddenFor(m => m.ProjectId, new { id = "partEdit_ProjectId_hidden" })
+                    @*<label class="control-label">Category</label>*@
+                    <select class="form-control" name="CategoryId" id="partCreate_CategoryId_select" required data-required-msg="Select a Category">
+                        @*<option value="">Select Category...</option>*@
+                        @foreach (var ctg in CEMVC.FrontEnd.Web.Models.DropDownItems.PartCategories)
+                        {
+                            <option value="@ctg.Id">@ctg.Title</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group col-sm-4">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn k-button" id="customPart_simpleEditBtn">Simple</button>
+                        <button type="button" class="btn k-button k-state-selected">Standard</button>
+                    </div>
+                </div>
+            </div>
+        }
+        @if (Model.Vendor.Enabled())
+        {
+            <div class="row">
+                <div class="form-group col-xs-6">
+                    <label for="PartCode" class="control-label">Part Code</label>
+                    @Html.TextBoxFor(m => m.Vendor.PartCode, new { @class = "form-control", placeholder = "#", autocomplete = "off", maxlength = 10, id = "part_PartCode" })
+                </div>
+                <div class="form-group col-xs-6">
+                    <label for="SupplierCode" class="control-label">Supplier Code</label>
+                    @Html.TextBoxFor(m => m.Vendor.SupplierCode, new { @class = "form-control", placeholder = "#", autocomplete = "off", maxlength = 10, id = "part_SupplierCode" })
+                </div>
+            </div>
+        }
+            <div class="breadcrumb clearfix" style="margin-bottom:10px"><strong>Cost calculation</strong><span role="button" class="ce-text-blue pull-right" id="costCalcPanelToggle">Collapse All</span></div>
+                <div class="ce-unit-type-select">
+                    <span class="ce-text-nobr _label">Unit Type:</span>
+                    <div class="btn-group-sm _radiogroup" role="radiogroup" data-toggle="buttons" id="UnitType_radioBtnGroup">
+                        <label class="btn ce-btn @((Model.PartTypeId == 1 ? "active" : null))">
+                            <input type="radio" name="PartTypeId" id="PartTypeId_value_1" value="1" autocomplete="off" @(_checked(Model.PartTypeId == 1)) data-title="Piece" />
+                            <span class="ce-icon _unit-type">@Html.Raw(File.ReadAllText(Server.MapPath("~/Images/i-unit-piece.svg")))</span> Piece
+                        </label>
+                        <label class="btn ce-btn @((Model.PartTypeId == 2 ? "active" : null))">
+                            <input type="radio" name="PartTypeId" id="PartTypeId_value_2" value="2" autocomplete="off" @(_checked(Model.PartTypeId == 2)) data-title="Sq. Foot" />
+                            <span class="ce-icon _unit-type">@Html.Raw(File.ReadAllText(Server.MapPath("~/Images/i-unit-square.svg")))</span> Sq. Foot
+                        </label>
+                        <label class="btn ce-btn @((Model.PartTypeId == 3 ? "active" : null))">
+                            <input type="radio" name="PartTypeId" id="PartTypeId_value_3" value="3" autocomplete="off" @(_checked(Model.PartTypeId == 3)) data-title="Lin. Foot" />
+                            <span class="ce-icon _unit-type">@Html.Raw(File.ReadAllText(Server.MapPath("~/Images/i-unit-length.svg")))</span> Lin. Foot
+                        </label>
+                        <label class="btn ce-btn @((Model.PartTypeId == 4 ? "active" : null))">
+                            <input type="radio" name="PartTypeId" id="PartTypeId_value_4" value="4" autocomplete="off" @(_checked(Model.PartTypeId == 4)) data-title="Cub. Yard" />
+                            <span class="ce-icon _unit-type">@Html.Raw(File.ReadAllText(Server.MapPath("~/Images/i-unit-volume.svg")))</span> Cub. Yard
+                        </label>
+                        <label class="btn ce-btn @((Model.PartTypeId == 5 ? "active" : null))">
+                            <input type="radio" name="PartTypeId" id="PartTypeId_value_5" value="5" autocomplete="off" @(_checked(Model.PartTypeId == 5)) data-title="Dollar" />
+                            <span class="ce-icon _unit-type">@Html.Raw(File.ReadAllText(Server.MapPath("~/Images/i-unit-money.svg")))</span> Dollar
+                        </label>
+                        <label class="btn ce-btn @((Model.PartTypeId == 6 ? "active" : null))">
+                            <input type="radio" name="PartTypeId" id="PartTypeId_value_6" value="6" autocomplete="off" @(_checked(Model.PartTypeId == 6)) data-title="Hour" />
+                            <span class="ce-icon _unit-type">@Html.Raw(File.ReadAllText(Server.MapPath("~/Images/i-unit-time.svg")))</span> Hour
+                        </label>
+                    </div>
+            </div><!-- material panel -->
+            <div class="panel-group ce-panel-group">
+              <div class="panel panel-default ce-panel" id="materialCost_panel">
+                <div class="panel-heading _flex">
+                    <div class="ce-panel-toolbar">
+                        <div class="_checkbox ce-label-wrap">
+                            <label class="ce-label-checkbox"><input type="checkbox" id="materialCostCheckbox" name="MaterialCostEnabled" value="true" @_checked(Model.MaterialCostEnabled)><span class="glyphicon ce-checkmark ce-checkmark-w-b-r" aria-hidden="true"></span> Material</label>
+                        </div>
+                        @Html.HiddenFor(m => m.MaterialCostFormula, new { id = "materialCostCalcMethod" })<!-- unit dropdown -->
+                        <div class="_select dropdown ce-text-blue" data-depends-on="materialCostCheckbox" data-enable-when=":checked">
+                            <span class="dropdown-toggle ce-label-wrap ce-dropdown-select" role="button" id="materialCostCalcMethodSelect" data-toggle="dropdown" data-tooltip="true" aria-haspopup="true" aria-expanded="false">
+                                @(Model.MaterialCostFormulaLabel) <i class="fas fa-caret-down"></i>
+                            </span>
+                            <ul class="dropdown-menu" aria-labelledby="materialCostCalcMethodSelect">
+                                @foreach (var cm in CEMVC.FrontEnd.Web.Models.DropDownItems.MaterialCostCalculationMethods((MaterialCostCalculationTypeEnum)Model.MaterialCostFormula))
+                                {
+                                    <li class="@_disabled(cm.Selected)"><a href="#" data-option-for="materialCostCalcMethod" data-option-value="@cm.Value" role="menuitemradio">@cm.Text</a></li>
+                                }
+                            </ul>
+                        </div><!-- ./unit dropdown -->
+                        <div class="_input" data-depends-on="materialCostCheckbox" data-enable-when=":checked"></div>
+                        @if (Model.Markup.Enabled())
+                        {
+                            <!-- markup dropdown -->
+                            <div class="_badge dropdown" data-depends-on="materialCostCheckbox" data-enable-when=":checked">
+                                <div class="ce-label-wrap dropdown-toggle" data-toggle="dropdown" aria-expanded="false" aria-haspopup="true" id="materialMarkupLabel">
+                                    <span role="button" class="ce-badge bg-markup @(Model.Markup.Material.HasValue ? Model.Markup.Material > 0 ? "markup-pos" : "" : "hidden")">
+                                        <i class="fa _icn" aria-hidden="true"></i><span data-field="MaterialMarkup">@(Model.Markup.Material.GetValueOrDefault().ToString("0.# \\%"))</span>
+                                    </span>
+                                    <span role="button" class="ce-dropdown-select ce-text-blue @(Model.Markup.Material.HasValue ? "hidden" : "")">Markup</span>
+                                </div>
+                                <div class="dropdown-menu dropdown-menu-right ce" aria-labelledby="materialMarkupLabel">
+                                    <div class="form-group">
+                                        <span class="ce-label-wrap">
+                                            <label class="ce-label-checkbox"><input type="checkbox" id="materialMarkupCheckbox" @_checked(Model.Markup.Material == null)><span class="glyphicon ce-checkmark ce-checkmark-w-b-r" aria-hidden="true"></span> Use Project Markup</label>
+                                        </span>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="MaterialMarkup" class="control-label control-label-block">Markup</label>
+                                        <!-- numeric input group -->
+                                        <div class="input-group ce-input-numeric-group">
+                                            <span class="input-group-btn" role="spinbutton">
+                                                <button class="btn btn-default _i-dec" type="button" data-control-for="MaterialMarkup" data-control-step="-1">&nbsp;</button>
+                                            </span>
+                                            @Html.TextBoxFor(m => m.Markup.Material, "{0:f1}", new { @class = "form-control text-center", placeholder = "0 %", autocomplete = "off", data_format = "n1", id = "MaterialMarkup", data_project_value_field = "Markup_Materials_Percent" })
+                                            <span class="input-group-btn" role="spinbutton">
+                                                <button class="btn btn-default _i-inc" type="button" data-control-for="MaterialMarkup" data-control-step="1">&nbsp;</button>
+                                            </span>
+                                        </div><!-- ./numeric input group -->
+                                    </div>
+                                </div>
+                            </div><!-- markup dropdown -->}
+                    </div>
+                    <a role="button" data-toggle="collapse" href="#materialDetailed" class="k-button k-flat k-button-icon"><span class="k-icon _chevron"></span></a>
+                </div>
+                <div class="panel-collapse collapse in" id="materialDetailed">
+                        <div class="panel-body" data-depends-on="materialCostCheckbox" data-enable-when=":checked">
+                            <div class="row">
+                                <div class="form-group col-xs-6 col-sm-6" data-depends-on="materialCostCalcMethod" data-show-when="[value=@((int)MaterialCostCalculationTypeEnum.DollarPerUnit)]" data-collapse-persistent="1">
+                                    <label for="UnitCost" class="control-label" data-field="UnitCost_label">$ / <span data-field="UnitType_title">-</span></label>
+                                    <!-- numeric input group -->
+                                    <div class="input-group ce-input-numeric-group">
+                                        <span class="input-group-btn">
+                                            <button class="btn btn-default _i-dec" type="button" data-control-for="UnitCost" data-control-step="-1">&nbsp;</button>
+                                        </span>
+                                        @Html.TextBoxFor(m => m.UnitCost, "{0:f2}", new { @class = "form-control text-center", placeholder = "0.00", autocomplete = "off", id = "UnitCost", data_format = "n2" })
+                                        <span class="input-group-btn">
+                                            <button class="btn btn-default _i-inc" type="button" data-control-for="UnitCost" data-control-step="1">&nbsp;</button>
+                                        </span>
+                                    </div><!-- ./numeric input group -->
+                                </div>
+                                <div class="form-group col-xs-6 col-sm-6" data-depends-on="materialCostCalcMethod" data-show-when="[value=@((int)MaterialCostCalculationTypeEnum.DollarPerUnit)]">
+                                    <label for="MaterialMultiplier" class="control-label">Multiplier</label>
+                                    @Html.TextBoxFor(m => m.MaterialMultiplier, new { autocomplete = "off", @class = "form-control ce-input", data_format = "n3", data_default = 1 })
+                                </div>
+                                <div class="form-group col-xs-12 hidden" data-depends-on="materialCostCalcMethod" data-show-when="[value=@((int)MaterialCostCalculationTypeEnum.LumpSum)]" data-collapse-persistent="1">
+                                    <label for="UnitCost_2" class="control-label">Lump Sum</label>
+                                    <div class="ce-input-wrap">
+                                        @Html.TextBoxFor(m => m.UnitCost, "{0:f2}", new { @class = "form-control ce-input", placeholder = "0.00", autocomplete = "off", id = "UnitCost_2", data_format = "n2" })
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                </div>
+              </div>
+                <!-- /.material panel --><!-- labor-panel -->
+                <div class="panel panel-default ce-panel" id="laborCost_panel">
+                    <div class="panel-heading _flex">
+                        <div class="ce-panel-toolbar">
+                            <div class="_checkbox ce-label-wrap">
+                                <label class="ce-label-checkbox"><input type="checkbox" id="laborCostCheckbox" name="LaborCostEnabled" value="true" @(_checked(Model.LaborCostEnabled))><span class="glyphicon ce-checkmark ce-checkmark-w-b-r" aria-hidden="true"></span> Labor</label>
+                            </div> @Html.HiddenFor(m => m.LaborCostFormula, new { id = "laborCostCalcMethod" })<!-- unit dropdown -->
+                            <div class="_select dropdown ce-text-blue" data-depends-on="laborCostCheckbox" data-enable-when=":checked">
+                                <span class="dropdown-toggle ce-label-wrap ce-dropdown-select" role="button" data-toggle="dropdown" data-tooltip="true" aria-haspopup="true" aria-expanded="false" id="laborCostCalcMethodSelect">
+                                    @Model.LaborCostFormulaLabel <i class="fas fa-caret-down"></i>
+                                </span><ul class="dropdown-menu" aria-labelledby="laborCostCalcMethodSelect">
+                                    @foreach (var cm in CEMVC.FrontEnd.Web.Models.DropDownItems.LaborCostCalculationMethods((LaborCostCalculationTypeEnum)Model.LaborCostFormula))
+                                    {
+                                        <li class="@_disabled(cm.Selected)"><a href="#" data-option-for="laborCostCalcMethod" data-option-value="@cm.Value" role="menuitemradio">@cm.Text</a></li>
+                                    }
+                                </ul>
+                            </div><!-- ./unit dropdown -->
+                            <div class="_input" data-depends-on="laborCostCheckbox" data-enable-when=":checked"></div>
+                            @if (Model.Markup.Enabled())
+                            {<!-- markup dropdown -->
+                                <div class="_badge dropdown" data-depends-on="laborCostCheckbox" data-enable-when=":checked">
+                                    <div class="ce-label-wrap dropdown-toggle" data-toggle="dropdown" aria-expanded="false" aria-haspopup="true" id="laborMarkupLabel">
+                                        <span role="button" class="ce-badge bg-markup @(Model.Markup.Labor.HasValue ? Model.Markup.Labor > 0 ? "markup-pos" : "" : "hidden")">
+                                            <i class="fa _icn" aria-hidden="true"></i><span data-field="LaborMarkup">@(Model.Markup.Labor.GetValueOrDefault().ToString("0.# \\%"))</span>
+                                        </span>
+                                        <span role="button" class="ce-dropdown-select ce-text-blue @(Model.Markup.Labor.HasValue ? "hidden" : "")">Markup</span>
+                                    </div>
+                                    <div class="dropdown-menu dropdown-menu-right ce" aria-labelledby="laborMarkupLabel">
+                                        <div class="form-group">
+                                            <span class="ce-label-wrap">
+                                                <label class="ce-label-checkbox"><input type="checkbox" id="laborMarkupCheckbox" @(_checked(Model.Markup.Labor == null))><span class="glyphicon ce-checkmark ce-checkmark-w-b-r" aria-hidden="true"></span> Use Project Markup</label>
+                                            </span>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="LaborMarkup" class="control-label control-label-block">Markup</label>
+                                            <!-- numeric input group -->
+                                            <div class="input-group ce-input-numeric-group">
+                                                <span class="input-group-btn" role="spinbutton">
+                                                    <button class="btn btn-default _i-dec" type="button" data-control-for="LaborMarkup" data-control-step="-1">&nbsp;</button>
+                                                </span>
+                                                @Html.TextBoxFor(m => m.Markup.Labor, "{0:f1}", new { @class = "form-control text-center", placeholder = "0 %", autocomplete = "off", data_format = "n1", id = "LaborMarkup", data_project_value_field = "Markup_Labor_Percent" })
+                                                <span class="input-group-btn" role="spinbutton">
+                                                    <button class="btn btn-default _i-inc" type="button" data-control-for="LaborMarkup" data-control-step="1">&nbsp;</button>
+                                                </span>
+                                            </div><!-- ./numeric input group -->
+                                        </div>
+                                    </div>
+                                </div><!-- markup dropdown -->}
+                        </div>
+                        <a role="button" data-toggle="collapse" href="#laborDetailed" class="k-button k-flat k-button-icon"><span class="k-icon _chevron"></span></a>
+                    </div>
+                    <div class="panel-collapse collapse in" id="laborDetailed">
+                        <div class="panel-body" data-depends-on="laborCostCheckbox" data-enable-when=":checked">
+                            <div class="row">
+                                <div class="form-group col-xs-6 col-sm-6" data-depends-on="laborCostCalcMethod" data-show-when="[value=@((int)LaborCostCalculationTypeEnum.HoursPerUnit)]" data-collapse-persistent="1">
+                                    <label for="HourlyMultiplier" class="control-label">Hours per Unit</label>
+                                    <!-- numeric input group -->
+                                    <div class="input-group ce-input-numeric-group" id="hoursPerUnit_input">
+                                        <span class="input-group-btn">
+                                            <button class="btn btn-default _i-dec" type="button" data-control-for="HourlyMultiplier" data-control-step="-1">&nbsp;</button>
+                                        </span>
+                                        @Html.TextBoxFor(m => m.HourlyMultiplier, new { @class = "form-control text-center", placeholder = "0", autocomplete = "off", data_format = "n3" })
+                                        <span class="input-group-btn">
+                                            <button class="btn btn-default _i-inc" type="button" data-control-for="HourlyMultiplier" data-control-step="1">&nbsp;</button>
+                                        </span>
+                                    </div><!-- ./numeric input group -->
+                                </div>
+                                <div class="form-group col-xs-6 col-sm-6" data-depends-on="laborCostCalcMethod" data-show-when="[value=@((int)LaborCostCalculationTypeEnum.Hours)]" data-collapse-persistent="1">
+                                    <label for="HourlyMultiplier_4" class="control-label">Hours</label>
+                                    <!-- numeric input group -->
+                                    <div class="input-group ce-input-numeric-group">
+                                        <span class="input-group-btn">
+                                            <button class="btn btn-default _i-dec" type="button" data-control-for="HourlyMultiplier_4" data-control-step="-1">&nbsp;</button>
+                                        </span>
+                                        @Html.TextBoxFor(m => m.HourlyMultiplier, new { @class = "form-control text-center", placeholder = "0", autocomplete = "off", data_format = "n2", id = "HourlyMultiplier_4" })
+                                        <span class="input-group-btn">
+                                            <button class="btn btn-default _i-inc" type="button" data-control-for="HourlyMultiplier_4" data-control-step="1">&nbsp;</button>
+                                        </span>
+                                    </div><!-- ./numeric input group -->
+                                </div>
+                                <div class="form-group col-xs-6 col-sm-6 hidden" data-depends-on="laborCostCalcMethod" data-show-when="[value=@((int)LaborCostCalculationTypeEnum.DollarPerUnit)]" data-collapse-persistent="1">
+                                    <label for="LaborCostPerUnit" class="control-label">$ / <span data-field="UnitType_title">-</span></label>
+                                    <!-- numeric input group -->
+                                    <div class="input-group ce-input-numeric-group">
+                                        <span class="input-group-btn">
+                                            <button class="btn btn-default _i-dec" type="button" data-control-for="LaborCostPerUnit" data-control-step="-1">&nbsp;</button>
+                                        </span>
+                                        @Html.TextBoxFor(x => x.LaborCostPerUnit, new { @class = "form-control text-center", placeholder = "$0.00", autocomplete = "off", data_format = "n2" })
+                                        <span class="input-group-btn">
+                                            <button class="btn btn-default _i-inc" type="button" data-control-for="LaborCostPerUnit" data-control-step="1">&nbsp;</button>
+                                        </span>
+                                    </div><!-- ./numeric input group -->
+                                </div>
+
+                                <div class="form-group col-xs-6 col-sm-6 hidden" data-depends-on="laborCostCalcMethod" data-show-when="[value=@((int)LaborCostCalculationTypeEnum.LumpSum)]" data-collapse-persistent="1">
+                                    <label for="LaborSum" class="control-label">Lump Sum</label>
+                                    <div class="ce-input-wrap">
+                                        @Html.TextBoxFor(m => m.LaborCostPerUnit, new { @class = "form-control ce-input", placeholder = "$0.00", autocomplete = "off", id = "LaborSum", data_format = "n2" })
+                                    </div>
+                                </div><!-- Labor Rate-->
+                                <div class="form-group col-xs-6 col-sm-6" id="laborRateFormGroup" data-scope="laborRate">
+                                    @Html.HiddenFor(m => m.LaborRateLetter) @Html.Hidden("LaborRateCode", Model.LaborRateModel.Title) @Html.Hidden("LaborRateTypical", Model.LaborRateModel.Rate)
+                                    <label for="partAdjust_LaborRate" class="control-label">
+                                        Labor Rate, $
+                                        <span class="k-icon k-i-warning ce-text-excl hidden" title="" data-toggle="tooltip" data-depends-on="partAdjust_LaborRate"></span>
+                                    </label>
+                                    <div class="input-group ce-input-dropdown-group">
+                                        @Html.TextBoxFor(m => m.LaborRate, "{0:0.00##}", new { id = "partAdjust_LaborRate", autocomplete = "off", @class = "form-control text-center", data_format = "0.00##" })
+                                        <!-- input group -->
+                                        <div class="input-group-btn">
+                                            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="laborRateSelectBtn"><span class="fas fa-caret-down"></span></button>
+                                            <ul class="dropdown-menu dropdown-menu-right" aria-labelledby="laborRateSelectBtn" data-role="laborRateOptions">
+                                                @foreach (var lr in CEMVC.FrontEnd.Web.Models.DropDownItems.UserLaborRates())
+                                                {
+                                                    <li><a href="#" role="link" data-option-for="LaborRateTypical" data-option-value="@lr.Rate.GetValueOrDefault().ToString()" data-option-title="@lr.Letter:@lr.Title">@lr.TextForDDL</a></li>
+                                                }
+                                            </ul>
+                                        </div>
+                                    </div><!-- /input-group -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- ./labor panel --><!-- subcontractor panel -->
+                <div class="panel panel-default ce-panel" id="subcontractorCost_panel">
+                  <div class="panel-heading _flex">
+                    <div class="ce-panel-toolbar">
+                        <div class="_checkbox ce-label-wrap">
+                            <label class="ce-label-checkbox"><input type="checkbox" id="subcontractorCostCheckbox" name="SubcontractorCostEnabled" value="true" @_checked(Model.SubcontractorCostEnabled)><span class="glyphicon ce-checkmark ce-checkmark-w-b-r" aria-hidden="true"></span> Subcontractor</label>
+                        </div><!-- unit dropdown -->
+                        <div class="_select dropdown ce-text-blue" data-depends-on="subcontractorCostCheckbox" data-enable-when=":checked">
+                            <span class="dropdown-toggle ce-dropdown-select ce-label-wrap" role="button" data-toggle="dropdown" data-tooltip="true" aria-haspopup="true" aria-expanded="false" id="subcontrCostCalcMethodSelect">
+                                @Model.SubcontractorCostFormulaLabel <span class="fas fa-caret-down"></span>
+                            </span>@Html.HiddenFor(x => x.SubcontractorCostFormula, new { id = "subcontractorCostCalcMethod" })
+                            <ul class="dropdown-menu" aria-labelledby="subcontrCostCalcMethodSelect">
+                                @foreach (var cm in CEMVC.FrontEnd.Web.Models.DropDownItems.SubcontractorCostCalculationMethods((SubcontractorCostCalculationTypeEnum)Model.SubcontractorCostFormula))
+                                {
+                                    <li class="@_disabled(cm.Selected)"><a href="#" data-option-for="subcontractorCostCalcMethod" data-option-value="@cm.Value" role="menuitemradio">@cm.Text</a></li>
+                                }
+                            </ul>
+                        </div><!-- ./unit dropdown -->
+                        <div class="_input" data-depends-on="subcontractorCostCheckbox" data-enable-when=":checked"></div>
+                        @if (Model.Markup.Enabled())
+                        {<!-- markup dropdown -->
+                        <div class="_badge dropdown" data-depends-on="subcontractorCostCheckbox" data-enable-when=":checked">
+                            <div class="ce-label-wrap dropdown-toggle" data-toggle="dropdown" aria-expanded="false" aria-haspopup="true" id="subcontractorMarkupLabel">
+                                <span role="button" class="ce-badge bg-markup @(Model.Markup.Subcontractor.HasValue ? Model.Markup.Subcontractor > 0 ? "markup-pos" : "" : "hidden")">
+                                    <i class="fa _icn" aria-hidden="true"></i><span data-field="SubcontractorMarkup">@(Model.Markup.Subcontractor.GetValueOrDefault().ToString("0.# \\%"))</span>
+                                </span>
+                                <span role="button" class="ce-dropdown-select ce-text-blue @(Model.Markup.Subcontractor.HasValue ? "hidden" : "")">Markup</span>
+                            </div>
+                            <div class="dropdown-menu dropdown-menu-right ce" aria-labelledby="subcontractorMarkupLabel">
+                                <div class="form-group">
+                                    <span class="ce-label-wrap">
+                                        <label class="ce-label-checkbox"><input type="checkbox" id="subcontractorMarkupCheckbox" @(_checked(Model.Markup.Subcontractor == null))><span class="glyphicon ce-checkmark ce-checkmark-w-b-r" aria-hidden="true"></span> Use Project Markup</label>
+                                    </span>
+                                </div>
+                                <div class="form-group">
+                                    <label for="SubcontractorMarkup" class="control-label control-label-block">Markup</label>
+                                    <!-- numeric input group -->
+                                    <div class="input-group ce-input-numeric-group">
+                                        <span class="input-group-btn" role="spinbutton">
+                                            <button class="btn btn-default _i-dec" type="button" data-control-for="SubcontractorMarkup" data-control-step="-1">&nbsp;</button>
+                                        </span>
+                                        @Html.TextBoxFor(x => x.Markup.Subcontractor, "{0:f1}", new { @class = "form-control text-center", placeholder = "0 %", autocomplete = "off", data_format = "n1", id = "SubcontractorMarkup", data_project_value_field = "Markup_Subcont_Percent" })
+                                        <span class="input-group-btn" role="spinbutton">
+                                            <button class="btn btn-default _i-inc" type="button" data-control-for="SubcontractorMarkup" data-control-step="1">&nbsp;</button>
+                                        </span>
+                                    </div><!-- ./numeric input group -->
+                                </div>
+                            </div>
+                        </div><!-- markup dropdown -->}
+                    </div>
+                    <a role="button" data-toggle="collapse" href="#subcontractorDetailed" class="k-button k-flat k-button-icon"><span class="k-icon _chevron"></span></a>
+                  </div>
+                    <div class="panel-collapse collapse in" id="subcontractorDetailed">
+                        <div class="panel-body" data-depends-on="subcontractorCostCheckbox" data-enable-when=":checked">
+                            <div class="row">
+                                <div class="form-group col-xs-6 col-sm-6" data-depends-on="subcontractorCostCalcMethod" data-show-when="[value=@((int)SubcontractorCostCalculationTypeEnum.HoursPerUnit)]" data-collapse-persistent="1">
+                                    <label for="SubcontractorCost" class="control-label">Hours per Unit</label>
+                                    <!-- numeric input group -->
+                                    <div class="input-group ce-input-numeric-group">
+                                        <span class="input-group-btn">
+                                            <button class="btn btn-default _i-dec" type="button" data-control-for="SubcontractorCost" data-control-step="-1">&nbsp;</button>
+                                        </span>
+                                        @Html.TextBoxFor(m => m.SubcontractorCost, new { @class = "form-control text-center", placeholder = "0", autocomplete = "off", data_format = "n2" })
+                                        <span class="input-group-btn">
+                                            <button class="btn btn-default _i-inc" type="button" data-control-for="SubcontractorCost" data-control-step="1">&nbsp;</button>
+                                        </span>
+                                    </div><!-- ./numeric input group -->
+                                </div>
+                                <div class="form-group col-xs-6" data-depends-on="subcontractorCostCalcMethod" data-show-when="[value=@((int)SubcontractorCostCalculationTypeEnum.HoursPerUnit)]" data-scope="laborRate">
+                                    @Html.HiddenFor(m => m.SubcontractorLaborRateLetter)
+                                    @Html.Hidden("SubcontractorLaborRateTypical", Model.SubcontractorLaborRateModel.Rate)
+                                    @Html.Hidden("SubcontractorLaborRateCode", Model.SubcontractorLaborRateModel.Title)
+                                    <label for="SubcontractorLaborRate" class="control-label">
+                                        Labor Rate, $ <span class="k-icon k-i-warning ce-text-excl hidden" title="" data-toggle="tooltip" data-depends-on="SubcontractorLaborRate"></span>
+                                    </label>
+                                    <div class="input-group ce-input-dropdown-group">
+                                        @Html.TextBoxFor(m => m.SubcontractorMultiplier, new { autocomplete = "off", @class = "form-control text-center", data_format = "0.00##", id = "SubcontractorLaborRate" })
+                                        <!-- input group -->
+                                        <div class="input-group-btn">
+                                            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="subctr_laborRateSelectBtn">
+                                                <span class="caret"></span>
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-right" aria-labelledby="subctr_laborRateSelectBtn" data-role="laborRateOptions">
+                                                @foreach (var lr in CEMVC.FrontEnd.Web.Models.DropDownItems.UserLaborRates())
+                                                {
+                                                    <li><a href="#" role="link" data-option-for="SubcontractorLaborRateTypical" data-option-value="@lr.Rate.GetValueOrDefault().ToString()" data-option-title="@lr.Letter:@lr.Title">@lr.TextForDDL</a></li>
+                                                }
+                                            </ul>
+                                        </div>
+                                    </div><!-- /input-group -->
+                                </div><!-- subctr mode#2 -->
+                                <div class="form-group col-xs-6 hidden" data-depends-on="subcontractorCostCalcMethod" data-show-when="[value=@((int)SubcontractorCostCalculationTypeEnum.DollarPerUnit)]" data-collapse-persistent="1">
+                                    <label for="SubcontractorCostPerUnit" class="control-label">$ / <span data-field="UnitType_title">-</span></label>
+                                    <!-- numeric input group -->
+                                    <div class="input-group ce-input-numeric-group">
+                                        <span class="input-group-btn">
+                                            <button class="btn btn-default _i-dec" type="button" data-control-for="SubcontractorCostPerUnit" data-control-step="-1">&nbsp;</button>
+                                        </span>
+                                        @Html.TextBoxFor(m => m.SubcontractorCost, "{0:f2}", new { @class = "form-control text-center", placeholder = "0", autocomplete = "off", id = "SubcontractorCostPerUnit", data_format = "n2" })
+                                        <span class="input-group-btn">
+                                            <button class="btn btn-default _i-inc" type="button" data-control-for="SubcontractorCostPerUnit" data-control-step="1">&nbsp;</button>
+                                        </span>
+                                    </div><!-- ./numeric input group -->
+                                </div>
+                                <div class="form-group col-xs-6 hidden" data-depends-on="subcontractorCostCalcMethod" data-show-when="[value=@((int)SubcontractorCostCalculationTypeEnum.DollarPerUnit)]">
+                                    <label for="SubcontractorMultiplier_2" class="control-label">Multiplier</label>
+                                    @Html.TextBoxFor(x => x.SubcontractorMultiplier, "{0:f2}", new { autocomplete = "off", @class = "form-control ce-input", id = "SubcontractorMultiplier_2", data_format = "n3", data_default = "1" })
+                                </div><!-- subctr mode#3 -->
+                                <div class="form-group col-xs-6 hidden" data-depends-on="subcontractorCostCalcMethod" data-show-when="[value=@((int)SubcontractorCostCalculationTypeEnum.LumpSum)]" data-collapse-persistent="1">
+                                    <label for="SubcontractorSum" class="control-label">Lump Sum</label>
+                                    <div class="ce-input-wrap">
+                                        @Html.TextBoxFor(m => m.SubcontractorCost, "{0:f2}", new { @class = "form-control ce-input", placeholder = "0", autocomplete = "off", id = "SubcontractorSum", data_format = "n2" })
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div><!-- ./subcontractor panel -->
+            </div>
+        </div><!-- /.part-adjust-main -->
+<div class="col-sm-4">
+    <div class="panel panel-default ce-panel part-adjust-preview">
+        <div class="panel-heading ce-text-bold">Part Preview</div>
+            <div class="form-inline _quantity">
+                <label for="partAdjust_Qty" class="control-label">Quantity (<span data-field="UnitType_title">@(Model.PartType != null ? Model.PartType.Plural : "")</span>)</label>
+                <!-- numeric input group -->
+                <div class="input-group ce-input-numeric-group">
+                    <span class="input-group-btn" role="spinbutton">
+                        <button class="btn btn-default _i-dec" type="button" data-control-for="partAdjust_Qty" data-control-step="-1">&nbsp;</button>
+                    </span>
+                    @Html.TextBoxFor(m => m.Qty, new { @class = "form-control text-center", placeholder = "1", autocomplete = "off", id = "partAdjust_Qty", data_format = "n2" })
+                    <span class="input-group-btn" role="spinbutton">
+                        <button class="btn btn-default _i-inc" type="button" data-control-for="partAdjust_Qty" data-control-step="1">&nbsp;</button>
+                    </span>
+                </div><!-- ./numeric input group -->
+            </div>
+            <div class="table-responsive ce-cost-preview">
+                <table class="table ce-table table-light" id="costPreviewGrid">
+                    <tr><th>Material <span class="pull-right _muted" data-title="Material Cost per Unit" data-field="UnitCost" data-format="c" data-toggle="tooltip" data-placement="bottom">$0.00</span></th><td data-format="c" data-field="Total_Material">@((Model.UnitCost * Model.Qty).GetValueOrDefault(0).ToString("C"))</td></tr>
+                    <tr><th>Labor <span class="pull-right _muted" data-title="Labor Cost per Unit" data-field="LaborCost" data-format="c" data-toggle="tooltip" data-placement="bottom">$0.00</span></th><td data-format="c" data-field="Total_Labor">@(((decimal?)Model.LaborRate * Model.Qty).GetValueOrDefault(0).ToString("C"))</td></tr>
+                    <tr><th>Subcontractor <span class="pull-right _muted" data-title="Subcontractor Cost per Unit" data-field="SubcontractorCost" data-format="c" data-toggle="tooltip" data-placement="bottom">$0.00</span></th><td data-field="Total_Subcontractor">$0.00</td></tr>
+                    <tr class="table-secondary"><th>Total <span class="pull-right text-muted" data-title="Total Cost per Unit" data-toggle="tooltip" data-placement="bottom" data-field="TotalCost">$0.00</span></th><td data-field="Total_TotalCost">$0.00</td></tr>
+                  @if (Model.Markup.Enabled())
+                  {
+                    <tr class="bg-markup _collapsed-hidden"><th>Markup <span class="pull-right _muted" data-title="Markup per Unit" data-toggle="tooltip" data-placement="bottom" data-field="Markup">$0</span></th><td data-field="Total_Markup">$0.00</td></tr>
+                    <tr class="table-primary"><th>Base Bid <span class="pull-right _muted" data-title="Base Bid per Unit" data-toggle="tooltip" data-placement="bottom" data-field="BaseBid">$0</span></th><td data-field="Total_BaseBid">$0.00</td></tr>
+                  }
+                    <tr class="_collapsed-hidden"><td colspan="2" class="_space"></td></tr>
+                    <tr class="_collapsed-hidden"><th class="ce-text-bold">Quantity</th><td data-field="Qty">@Model.Qty</td></tr>
+                    <tr><th class="ce-text-bold">Labor Hours</th><td data-field="LaborHours">0</td></tr>
+                    <tr class="_collapsed-hidden"><th class="ce-text-bold">Cost per <span data-field="Unit_title">Unit</span></th><td data-field="CostPerUnit">$0.00</td></tr>
+                </table>
+        </div>
+    </div>
+</div>
+</div>
+@if (displayReportTexts) {
+<section id="partAdjustReportTexts" class="ce-part-adjust-report-texts"><!-- Report Texts-->
+    <div class="breadcrumb clearfix"><strong>Report Text</strong> <span role="button" class="ce-text-blue pull-right" id="reportTextsToggle">Collapse All</span></div>
+    <div class="text-right clearfix">
+        <label for="preliminary_report_text" class="control-label pull-left">Preliminary</label>
+        <span class="text-muted">Insert:</span> <div class="btn-toolbar ce-btn-group btn-group-xs">
+            <button type="button" class="btn btn-xs ce-btn" role="button" data-tag-for="PreliminaryText" data-tag-id="p">Provide & Install</button>
+            <button type="button" class="btn btn-xs ce-btn" role="button" data-tag-for="PreliminaryText" data-tag-id="q">Quantity</button>
+            <button type="button" class="btn btn-xs ce-btn" role="button" data-tag-for="PreliminaryText" data-tag-id="u">Unit Type</button>
+            <button type="button" class="btn btn-xs ce-btn" role="button" data-tag-for="PreliminaryText" data-tag-id="d">Part Description</button>
+        </div>
+    </div>
+    <div class="form-group">
+        @Html.TextAreaFor(m => m.PreliminaryText, new { @class = "form-control", autocomplete = "off" })
+    </div>
+    <div class="text-right clearfix">
+        <label for="formal_report_text" class="control-label pull-left">Formal</label>
+        <span class="text-muted">Insert:</span> <div class="btn-toolbar ce-btn-group btn-group-xs">
+            <button type="button" class="btn btn-xs ce-btn" role="button" data-tag-for="FormalText" data-tag-id="p">Provide & Install</button>
+            <button type="button" class="btn btn-xs ce-btn" role="button" data-tag-for="FormalText" data-tag-id="q">Quantity</button>
+            <button type="button" class="btn btn-xs ce-btn" role="button" data-tag-for="FormalText" data-tag-id="u">Unit Type</button>
+            <button type="button" class="btn btn-xs ce-btn" role="button" data-tag-for="FormalText" data-tag-id="d">Part Description</button>
+        </div>
+    </div>    
+    <div class="form-group">
+        @Html.TextAreaFor(m => m.FormalText, new { @class = "form-control", autocomplete = "off" })
+    </div>
+    <div class="text-right clearfix">
+        <label for="subcontractor_report_text" class="control-label pull-left">Subcontractor</label>
+        <span class="text-muted">Insert:</span> <div class="btn-toolbar ce-btn-group btn-group-xs">
+            <button type="button" class="btn btn-xs ce-btn" role="button" data-tag-for="SubcontractorText" data-tag-id="p">Provide & Install</button>
+            <button type="button" class="btn btn-xs ce-btn" role="button" data-tag-for="SubcontractorText" data-tag-id="q">Quantity</button>
+            <button type="button" class="btn btn-xs ce-btn" role="button" data-tag-for="SubcontractorText" data-tag-id="u">Unit Type</button>
+            <button type="button" class="btn btn-xs ce-btn" role="button" data-tag-for="SubcontractorText" data-tag-id="d">Part Description</button>
+        </div>
+    </div>
+    <div class="form-group">
+        @Html.TextAreaFor(m => m.SubcontractorText, new { @class = "form-control", autocomplete = "off" })
+    </div>
+</section> }
+@if(displayMiscellaneous) {
+<section>
+<div class="breadcrumb ce-text-bold" style="margin-top:15px">Miscellaneous</div>
+<div class="ce-miscelaneous">
+    <div class="media form-group">
+        <div class="media-left">
+            <div class="_placeholder @(Model.HasImageLoaded ? "hidden" : "")" id="partImage_placeholder"><p class="text-center">Part Image Upload</p></div>            
+            <div id="partImage" class="_image @(Model.HasImageLoaded ? "" : "hidden")">
+                @if (Model.HasImageLoaded)
+                {
+                    <img src="@(imageReadUrl)&t=@(DateTime.Now.ToUnixTimestamp().ToString())" draggable="false">}
+                <button type="button" class="btn btn-block ce-btn _plain bg-caution" id="imageRemoveBtn"><i class="ce-icon fas fa-trash-alt"></i>&nbsp; Remove Image</button>
+            </div>
+        </div>
+        <div class="media-body">
+            <input type="file" name="imageFile" accept="image/png, image/gif, image/jpeg" id="imageUploadInput" data-save-url="@imageSaveUrl" data-remove-url="@imageDeleteUrl" />
+        </div>
+    </div>
+    <div>
+        <label for="PartNotes" class="control-label control-label-block">Part Notes</label>
+        @Html.TextAreaFor(m => m.NotesText, new { @class = "form-control", style= "resize: vertical" })
+    </div>
+</div>
+</section> }
+</form>
+<script>
+	@* Throttled call to prevent overflow *@
+    var partCostCalcutationThrottle = kendo.throttle(partCostCalcutation, 250);
+    $(function () {
+        unitTypeChange.call($('#partAdjustEditForm input[name=PartTypeId]:checked'));
+        //partCostCalcutation();
+        
+        $('#partAdjustEditForm span[data-toggle=tooltip]').tooltip();
+        
+
+        $('#partAdjustEditForm').on('change', function (e) {
+            var id = $(e.target).prop('id');
+            if (id == 'materialMarkupCheckbox' || id == 'laborMarkupCheckbox' || id == 'subcontractorMarkupCheckbox') {
+                markupCheckboxChange.call($(e.target), e);
+                //markupCheckboxChange(e);
+            }
+            if (id == 'materialCostCheckbox' || id == 'laborCostCheckbox' || id == 'subcontractorCostCheckbox') {
+                costCalcEnableChange.call($(e.target), e);
+            }
+            partCostCalcutationThrottle();
+            $(this).data('has-property-changed', true);
+        });
+        $('#partAdjustEditForm').on('change', 'input:text', formatInputValue);
+        $('#partAdjustEditForm').on('change', 'input[name=PartTypeId]', unitTypeChange);
+        $('#partAdjustEditForm').on('change', 'input[name=LaborRate]', laborRateChange);
+        $('#partAdjustEditForm').on('change', 'input#materialCostCalcMethod', matCostCalcChange);
+        $('#partAdjustEditForm').on('change', 'input#laborCostCalcMethod', laborCostCalcChange);
+        $('#partAdjustEditForm').on('change', 'input#subcontractorCostCalcMethod', subcontrCostCalcChange);
+        $('#partAdjustEditForm').on('change', 'input#SubcontractorLaborRate', laborRateChange);
+
+        $('#partAdjustEditForm').on('change', 'input[name^="Markup."]', inputMarkupChange);
+
+        $('#partAdjustEditForm .input-group-btn').on('click', 'button[data-control-for]', controlClick);
+        $('#partAdjustEditForm ul.dropdown-menu').on('click', 'a[data-option-for]', optionClick);
+        $('#partAdjustEditForm .btn-toolbar').on('click', '.btn[data-tag-for]', tagInsertClick);
+        $('#partAdjustEditForm div.dropdown-menu').on('click', function (e) {
+            @*to prevent menu collapsing on click inside*@
+            e.stopPropagation();
+        });
+        $('#partAdjustEditForm .dropdown-menu._persistent').on('click', function (e) {
+            @*to prevent menu collapsing on click inside*@
+            e.stopPropagation();
+        });
+
+        $('#partAdjustEditForm .panel-collapse').on('shown.bs.collapse', costCalcPanelExpand).on('hidden.bs.collapse', costCalcPanelCollapse);
+
+        $('#partAdjustEditForm #costCalcPanelToggle').on('click', toggleCostCalcPanels);
+        $('#partAdjustEditForm #reportTextsToggle').on('click', toggleReportTextAreas);
+
+        $('#partAdjustEditForm #partEdit_Category_Id').on('change', partEdit_categorySelected);
+        $('#partAdjustEditForm #partEdit_SubCategory_Id').on('change', partEdit_categorySelected);
+
+        $('#partAdjustEditForm .ce-dashboard-category ul.dropdown-menu').on('click', 'a[role=button][data-action]', function (e) {
+            e.preventDefault();
+            var mode = "0";
+            
+            switch ($(this).attr('data-action')) {
+                case "edit":
+                    mode = 1;
+                    var cat_select = $('#partEdit_Category_Id');
+                    var initialCat = $('#part_CategoryId').val(),
+                        initialSub = $('#part_SubCategoryId').val(),
+                        initialGrp = $('#part_GroupId').val();
+
+                    if (cat_select.length)
+                        if (!cat_select.data('categoryList'))
+                            $.getJSON('@Url.Action("PartCategoryList", "Parts")', {}, function (resp) {
+                                if (resp.length) {
+                                    cat_select.data('categoryList', resp).empty();
+
+                                    for (var i = 0; i < resp.length; i++) {
+                                        if (resp[i].parent_id != null)
+                                            break;
+                                        $('<option />', { 'text': resp[i].title, 'value': resp[i].id, 'selected': resp[i].id == initialCat }).appendTo(cat_select);
+                                    }
+
+                                    $('#partEdit_SubCategory_Id').empty();
+                                    $.each($.grep(resp, (e) => e.parent_id == initialCat), (i, value) => {
+                                        $('<option />', { 'text': value.title, 'value': value.id, 'selected': value.id == initialSub }).appendTo($('#partEdit_SubCategory_Id'));
+                                    });
+
+                                    $('#partEdit_Group_Id').empty();
+                                    $.each($.grep(resp, (e) => e.parent_id == initialSub), (i, value) => {
+                                        $('<option />', { 'text': value.title, 'value': value.id, 'selected': value.id == initialGrp }).appendTo($('#partEdit_Group_Id'));
+                                    });
+                                }
+                            });
+                        else {
+                            $('#partEdit_Category_Id').trigger('change');
+                            setTimeout(function () {
+                                $('#partEdit_SubCategory_Id').val($('#part_SubCategoryId').val()).trigger('change');
+                                $('#partEdit_Group_Id').val($('#part_GroupId').val());
+                            }, 20);
+                    }
+
+                case "cancel":
+                    if (mode == "0") {
+                        $('#partEdit_Group_Id').empty();
+                        $('#partEdit_SubCategory_Id').empty();
+                        $('#partEdit_Category_Id').val($('#part_CategoryId').val());
+                    }
+                    @* toggle edit/view mode *@
+                    $(this).closest('ul.dropdown-menu').attr('data-mode', mode)
+                        .find('li[data-depends-on]').removeClass('hidden')
+                        .each(function () {
+                            $(this).css({ 'display': $(this).attr('data-show-when') == mode ? 'block' : 'none' }).find('select').prop('disabled', mode == 0);
+                        });
+                    break;
+                case "done":
+                    submitPartDirectoryClick.call($(this), e);
+                    break;
+            }
+
+        });
+        $('#partAdjustEditForm #partCreate_CategoryId_select').kendoDropDownList({ optionLabel: { text: "Select a Category...", value: "" }, value: "@(Model.CategoryId.HasValue ? Model.CategoryId.ToString() : "" )" });
+
+        $('#partAdjustEditForm ul.dropdown-menu[data-role=laborRateOptions]').on('click', 'a[data-option-for]', laborRateSelect);
+
+        $('#dashboard').on('click', 'a#favoriteLink,span[aria-labelledby=favoriteLink]', favoriteClick);
+        $('#dashboard').on('click', 'a#deletePartLink,span[aria-labelledby=deletePartLink]', deleteClick);
+        $('#dashboard').on('click', 'a#revertPartLink', revertClick);
+        $('#dashboard').on('click', 'a#saveAsNewPartLink', saveAsClick);
+
+
+        if (window.getCookie && getCookie('partEditFormCollapsed') == '1')
+            condensedViewFast();
+
+@if (displayMiscellaneous) { <text>
+        $("#imageUploadInput").kendoUpload({
+            enabled: $('#partAdjustEditForm input[name=Id]').val() > 0,
+            async: {
+                saveUrl: '@(imageSaveUrl)',
+                //removeUrl: "remove",
+                autoUpload: true
+            },
+            multiple: false,
+            validation: {
+                allowedExtensions: [".png", ".jpg", ".gif"],
+                maxFileSize: 900000
+            },
+            //localization: {
+            //    dropFilesHere: "To Be Able Upload an Image, You Should Save Part "
+            //  uploadFail: "image not uploaded, please retry"
+            //},
+            success: function (e) {
+                $('#partImage').find('img').remove().end()
+                    .prepend('<img src="@(Html.Raw(imageReadUrl))&t=' + new Date().getTime() + '" />').removeClass('hidden');                
+                $('#partImage_placeholder').addClass('hidden');
+            },
+            error: function(e) {
+                // An array with information about the uploaded files
+                var files = e.files;
+
+                if (e.operation == "upload") {
+                    alert("Failed to upload " + files.length + " file(s)");
+                }
+                //console.log(e.XMLHttpRequest);
+            }
+        });
+        $('#imageRemoveBtn').on('click', removeImageRequest);
+</text> }
+        $("#partAdjustEditForm").kendoValidator();
+
+        $('#materialCostCheckbox, #materialCostCalcMethod, #materialMarkupCheckbox, #laborCostCheckbox, #laborCostCalcMethod, #laborMarkupCheckbox, #subcontractorCostCheckbox, #subcontractorCostCalcMethod, #subcontractorMarkupCheckbox, #partAdjust_LaborRate, #SubcontractorLaborRate').trigger('change');
+        $('#partAdjustEditForm').data('has-property-changed', false);
+    });
+
+    function costCalcPanelExpand(e) {
+        var panel = $(this);
+        $(this).siblings('.panel-heading').first()
+            .find('.ce-panel-toolbar')
+            .find('._select span[data-tooltip]').tooltip('destroy').end()
+            .find('._input').find('.input-group, .ce-input-wrap')
+            .each(function () {
+                $(this).appendTo($('.panel-body>.row>.form-group[data-collapse-persistent][data-show-when="' + $(this).attr('data-show-when') + '"]', panel).first())
+                    .removeAttr('data-depends-on data-show-when')
+                    .removeClass('hidden')
+            });
+    }
+
+    function costCalcPanelCollapse(e) {
+        var node = $(this).siblings('.panel-heading').first().find('.ce-panel-toolbar>._input').first();
+        $(this).find('[data-collapse-persistent]').find('.input-group, .ce-input-wrap')
+            .attr('data-depends-on', function () { return $(this).parent().attr('data-depends-on'); })
+            .attr('data-show-when', function () { return $(this).parent().attr('data-show-when'); })
+            .addClass(function () { return $(this).parent().is('.hidden') ? 'hidden' : '' })
+            .appendTo(node);
+
+        _tooltipRebind.call(this, node.siblings('._select').find('span[data-tooltip]'));
+    }
+
+    function toggleCostCalcPanels(e) {
+        var action = 'show';
+        if ($(this).is('.collapsed')) {
+            action = 'show';
+            $(this).removeClass('collapsed').text('Collapse All');
+        }
+        else {
+            action = 'hide';
+            $(this).addClass('collapsed').text('Expand All');
+        }
+        $(this).closest('.part-adjust-main').find('.panel-group').first().find('.panel-collapse').collapse(action);
+        @* using animation to slow down the toggling *@
+        $('#costPreviewGrid').animate('fast', function () { $(this).toggleClass('table-condensed collapsed', action == 'hide'); });
+    }
+
+    function toggleReportTextAreas(e) {
+        var expand = $(this).is('.collapsed');
+        $(this).fadeOut(function () { $(this).toggleClass('collapsed', !expand).text(expand ? 'Collapse All' : 'Expand All').fadeIn('fast'); });
+        $(this).closest('section').find('textarea').animate({ height: expand ? '48px' : '30px' }, 400, 'swing',
+            function () { $(this).css('height', 'auto').prop('rows', expand ? 2 : 1) });
+    }
+
+    function toggleToolsView(flag) {
+        if (typeof flag !== 'boolean')
+            throw Error('Boolean value expected');
+
+        $('#partAdjustEditForm').find('#materialDetailed, #laborDetailed, #subcontractorDetailed').collapse(flag ? 'show' : 'hide').end()
+            .find('#PreliminaryText, #FormalText, #SubcontractorText').animate({ height: flag ? '48px' : '30px' }, 400, 'swing',
+            flag ? function () { $(this).css('height', 'auto').removeProp('rows') } : function () { $(this).css('height', 'auto').prop('rows', 1) } );
+
+        $('#costCalcPanelToggle, #reportTextsToggle').text(flag ? 'Collapse All' : 'Expand All').toggleClass('collapsed', !flag);
+        $('#costPreviewGrid').toggleClass('table-condensed collapsed', !flag);
+        //$('#partAdjustEditForm').closest('.modal-content').find('.modal-header a[data-action]').toggleClass('hidden');
+
+        document.cookie = 'partEditFormCollapsed=' + (flag ? '0' : '1') + '; max-age=31572288';
+    }
+
+    function condensedViewFast() {
+        $('#materialCost_panel, #laborCost_panel, #subcontractorCost_panel').find('a[data-toggle=collapse]').addClass('collapsed');
+        $('#partAdjustEditForm .panel-collapse').filter('#materialDetailed, #laborDetailed, #subcontractorDetailed')
+            .removeClass('in').trigger('hidden.bs.collapse');
+        $('#PreliminaryText, #FormalText, #SubcontractorText').attr('rows', 1);
+        $('#costCalcPanelToggle, #reportTextsToggle').text('Expand All').toggleClass('collapsed', true);
+        $('#costPreviewGrid').addClass('table-condensed collapsed');
+        $('#partAdjustEditForm').trigger('collapse.ce.partedit');
+    }
+
+    function partEdit_expandTools() {
+        toggleToolsView(true);
+        $('#partAdjustEditForm').trigger('expand.ce.partedit');
+        return false;
+    }
+
+    function partEdit_condenseTools() {
+        toggleToolsView(false);
+        $('#partAdjustEditForm').trigger('collapse.ce.partedit');
+        return false;
+    }
+
+    function getCategoryOptionList() {
+        var cat = $('#CurrentCategoryId').data('kendoDropDownList');
+        return cat.dataSource.data();
+    }
+
+    function formatInputValue(e) {
+        var format = $(this).attr('data-format');
+        if (!!format) {
+            var parsed = kendo.parseFloat($(this).val());
+            if (parsed === null)
+                parsed = $(this).is('[data-default]') ? /*kendo*/parseFloat($(this).attr('data-default')) : 0;
+            $(this).val(kendo.toString(parsed, format));
+        }
+
+    }
+
+    function unitTypeChange(e) {
+        var form = $('#partAdjustEditForm');
+        var title = $(this).attr('data-title');
+        if (title) {
+            $('span[data-field=UnitType_title]', form).text(title);
+            $('span[data-field=Unit_title]', form).text($(this).val() >= 5 ? 'Unit' : title);
+        }
+
+        setEditMode($(this).val());
+    }
+
+    @*smart switch between unit types*@
+    function setEditMode(mode) {
+        if (mode == 5) {
+            @* release panel and all clild elements *@
+            $('#materialCost_panel .k-state-disabled');
+            @* enable material calculation to operate markup *@
+            $('#materialCost_panel').toggleClass('k-state-disabled', false).find('.k-state-disabled').toggleClass('k-state-disabled', false)
+                .find('div.panel-body').toggleClass('k-state-disabled', true);
+
+            $('#materialCostCalcMethodSelect').parent().toggleClass('k-state-disabled', true);
+            $('#materialCostCheckbox').prop('checked', true).closest('.ce-label-wrap').toggleClass('k-state-disabled', true);                
+                
+            @* normalize other panels *@
+            $('#laborCost_panel').toggleClass('k-state-disabled', true).find('.k-state-disabled').toggleClass('k-state-disabled', false);
+            $('#subcontractorCost_panel').toggleClass('k-state-disabled', true).find('.k-state-disabled').toggleClass('k-state-disabled', false);
+            $('#laborCostCheckbox, #subcontractorCostCheckbox').prop('checked', false);
+
+        }
+        else if (mode == 6) {
+            @* release panel and all clild elements *@
+            $('#laborCost_panel').toggleClass('k-state-disabled', false).find('.k-state-disabled').toggleClass('k-state-disabled', false);
+            @* enable labor calculation to operate markup*@
+            $('#laborCostCalcMethodSelect').parent().toggleClass('k-state-disabled', true);
+            $('#laborRateFormGroup').siblings().toggleClass('k-state-disabled', true);
+            $('#laborCostCheckbox').prop('checked', true).closest('.ce-label-wrap').toggleClass('k-state-disabled', true);
+
+            @*normalize other panels*@
+            $('#materialCost_panel').toggleClass('k-state-disabled', true).find('.k-state-disabled').toggleClass('k-state-disabled', false);
+            $('#subcontractorCost_panel').toggleClass('k-state-disabled', true).find('.k-state-disabled').toggleClass('k-state-disabled', false);
+            $('#materialCostCheckbox, #subcontractorCostCheckbox').prop('checked', false);
+        }
+        else {
+            @* enable all panels *@
+            $('#materialCost_panel').toggleClass('k-state-disabled', false).find('.k-state-disabled').toggleClass('k-state-disabled', false);
+            $('#laborCost_panel').toggleClass('k-state-disabled', false).find('.k-state-disabled').toggleClass('k-state-disabled', false);
+            $('#subcontractorCost_panel').toggleClass('k-state-disabled', false).find('.k-state-disabled').toggleClass('k-state-disabled', false);
+            $('#materialCostCheckbox, #laborCostCheckbox, #subcontractorCostCheckbox').trigger('change');
+        }
+    }
+
+    function controlClick(e) {
+        e.preventDefault();
+
+        var inputId = $(this).attr('data-control-for');
+        if (!inputId)
+            return false;
+
+        var input = $('#' + inputId);
+        var oldVal = kendo.parseFloat(input.val());
+        input.val(kendo.toString(oldVal + 1 * $(this).attr('data-control-step'), "n2"));
+        input.trigger('change');
+    }
+
+    function optionClick(e) {
+        e.preventDefault();
+        var ul = $(this).closest('ul.dropdown-menu'),
+            labelId = ul.attr('aria-labelledby');
+        if (labelId)
+            $('span#' + labelId, ul.parent()).html($(this).text() + ' <span class="caret"></span>');
+
+        var inputId = $(this).attr('data-option-for');
+        if (!inputId)
+            return false;
+
+        var input = $('#' + inputId).val($(this).attr('data-option-value'));//.attr('data-option-title', $(this).attr('data-option-title') || $(this).text());
+        input.trigger('change');
+
+        $(this).closest('li').addClass('disabled').siblings().removeClass('disabled');
+    }
+
+    function tagInsertClick(e) {
+        e.preventDefault();
+        var inputId = $(this).attr('data-tag-for');
+        if (!inputId)
+            return false;
+        var input = $('#' + inputId), tag = $(this).attr('data-tag-id'), text = input.text(),
+            cursorPosDetect = !!$.fn.getCursorPosition,
+            cursorPos = cursorPosDetect ? input.getCursorPosition() : 0;
+
+        if (!cursorPosDetect)
+            console.warn('jQuery.fn.getCursorPosition() not defined');
+
+        var textPad = function (txt, pos, len) {
+            return (pos ? ' ' : '') + txt + (pos == len ? '' : ' ');
+        }
+        switch (tag) {
+            case 'p':
+                text = "@CEMVC.FrontEnd.Web.Core.Utils.ServicesFactory.Instance.GetOptionsService().GetOption(OptionsTypeEnum.MiscOptions_PButtonText)";
+                cursorPos = 0;
+                break;
+            case 'q':
+                text = textPad('[qty]', cursorPos, text.length);
+                break;
+            case 'u':
+                text = textPad($('#partAdjustEditForm input[name=PartTypeId]:checked').attr('data-title') + ' of', cursorPos, text.length);
+                break;
+            case 'd':
+                text = textPad($('#partAdjustEditForm #Title').val(), cursorPos, text.length);
+                break;
+        }
+
+        text = (cursorPos ? $.trim(input.val()).substring(0, cursorPos) : '') + text + $.trim(input.val()).substring(cursorPos);
+        input.val(text).trigger('focus');
+        if (cursorPosDetect)
+            input.setCursorPosition(text.length);
+    }
+
+    function favoriteClick(e) {
+        e.preventDefault();
+        var menuItm = $(this).parent(),
+            iconElt = menuItm.find('._fav').first();
+
+        if ($('#OriginalPartId').val() == '')
+            return false;
+
+        menuItm.toggleClass('k-state-disabled', true);
+
+        $.post('@(Url.Action("ChangeFavorite", "Parts"))', { partId: $('#OriginalPartId').val(), isFavorite: !iconElt.is('.active') }, function (data, status) {
+            menuItm.toggleClass('k-state-disabled', false);
+            if (data['value'] !== undefined) {
+                iconElt.toggleClass('active', !!data['value']);
+                setDataModified(menuItm.closest('form'));
+            }
+            else
+                alert("Failed to change the property:\nStatus: " + status);
+        }).fail(function () {
+            alert("Failed to change the property. Please retry");
+            menuItm.toggleClass('k-state-disabled', false);
+        });
+
+    }
+
+    function copyPartClick(e) {
+        e.preventDefault();
+        if (window.copyOrMovePartToProjectDialog)
+            copyOrMovePartToProjectDialog($('#projectPartId').val(), 'copy');
+    }
+
+    function movePartClick(e) {
+        e.preventDefault();
+        if (window.copyOrMovePartToProjectDialog)
+            copyOrMovePartToProjectDialog($('#projectPartId').val(), 'move');
+    }
+@if (Model.ProjectId.HasValue) {<text>
+    function deleteClick(e) {
+        e.preventDefault();
+        var deleteFunc = typeof window.removePart == 'function' ? window.removePart : function () { alert('removePart() is not defined'); };
+        showDeletePrompt($('#projectPartId').val(), deleteFunc);
+        //kendo.confirm('Are you sure to delete the part from Project?');
+    }
+ </text> } else {<text>
+    function deleteClick(e) {
+        e.preventDefault();
+        var deleteFunc = typeof window.onPartDelete == 'function' ? window.onPartDelete : function () { alert('onPartDelete() is not defined'); };
+        showDeletePrompt($('#partId').val(), deleteFunc);
+    }
+    </text> }
+    function revertClick(e) {
+        e.preventDefault();
+        showCustomPrompt("Are you sure you want to reset this part to default?<br/>All properties will be changed to default, this action cannot be undone.", "Confirmation required", null, { partId: $('#projectPartId').val() },
+            (e) => {
+                $.post('@(Url.Action("ProjectPartEditReset", "Project"))', { partId: e.data.partId }, function (data, status) {
+                    if (status == "success") {
+                        if (window.modalContentRefresh)
+                            modalContentRefresh(e.data.partId);
+                        else alert('modalContentRefresh is not found');
+                    }
+                    else
+                        alert("Failed to reset part:\nStatus: " + status);
+                }).fail(function () {
+                    CEShowError("Failed to reset part. Please retry");
+                });
+            });
+    }
+
+    function saveAsClick(e) {
+        e.preventDefault();
+        var thisLink = $(this);
+        $.post('@(Url.Action("SaveAsNewPart", "Parts"))', { projectPartId:  $('#projectPartId').val() }, function (data, status) {
+            if (status == "success") {
+                CEShowSuccess("Part was saved in library");
+                $('#libraryPartLink').attr('href', function (i, cur) { return '@(Url.Action("Index", "Parts"))#editPart=' + data.data.id; }).parent().removeClass('k-state-disabled');
+                thisLink.parent().addClass('k-state-disabled');
+            }
+            else
+                alert("Failed to save part:\nStatus: " + status);
+        }).fail(function () {
+            CEShowError("Failed to save part. Please retry");
+        });
+    }
+
+    function costCalcEnableChange(e) {
+        var thisElem = $(this),
+            panel = $(this).closest('.panel');
+        $('div[data-depends-on=' + thisElem.prop('id') + ']', panel).each(function () {
+            $(this).toggleClass('k-state-disabled', !thisElem.is($(this).attr('data-enable-when')));
+        });
+    }
+
+    function laborRateSelect(e) {
+        e.preventDefault();
+        var scope = $(this).closest('div[data-scope=laborRate]');
+        var title = $(this).attr('data-option-title'), value = $(this).attr('data-option-value');
+
+        if (title && scope.length) {
+            $('input[name$=LaborRateLetter]', scope).val(title.charAt(0));
+            $('input[name$=LaborRateCode]', scope).val(title.substr(2));
+        }
+        if (!scope.length)
+            console.error('data-scope="laborRate" is not defined');
+        $('input[id$=LaborRate]', scope).val(value).trigger('change');
+    }
+
+    function laborRateChange(e) {
+        var input = $(this),
+            inputId = input.prop('id'),
+            scope = input.closest('div[data-scope=laborRate]');
+        if (!scope.length)
+            throw Error('[data-scope] is not defined');
+        //var form = $('#partAdjustEditForm');
+        var typVal = parseFloat($('input[name$=LaborRateTypical]', scope).val() || 0);
+        @*console.log('val = ' + input.val() + '[' + $('input[id$=LaborRateCode]', scope).val() + ']; typVal = ' + typVal)*@
+        $('span[data-depends-on='+inputId+']', scope).attr('data-original-title', 'Custom value input. ' + (typVal ? 'Typical ' + $('input[id$=LaborRateCode]', scope).val() + ' value is $' + typVal : 'You are able to select a value from the list')).toggleClass('hidden', typVal == input.val());
+        if (typVal != input.val() || typVal == null)
+            scope.find('ul.dropdown-menu>li.disabled').removeClass('disabled');
+    }
+
+    function removeImageRequest(e) {
+        var thisBtn = $(e.target);
+        $.post($('#imageUploadInput').attr('data-remove-url'), { projectPartId: @Model.Id }, function (data, status) {
+            if (status == "success") {
+                $('#partImage').find('img').remove().end().addClass('hidden');
+                $('#partImage_placeholder').removeClass('hidden');
+            }
+            else
+                alert("Failed to remove image:\nStatus: " + status);
+        }).fail(function () {
+            alert("Failed to remove image. Please retry");
+        });
+    }
+
+    function _resetInputCallback(n, c) {
+        return $(this).prop('disabled') ? ($(this).attr('data-default') || '') : c;
+    }
+
+    function _tooltipRebind($target) {
+        if ($(this).is(':visible'))
+            return;
+
+        var calcMethodTitle = $.trim($target.text());
+        var tooltip = '', field;
+
+        if ($target.prop('id') == 'subcontrCostCalcMethodSelect' && calcMethodTitle == 'Hours per Unit') {
+            field = $(this).find('#SubcontractorLaborRate:not(:disabled)');
+            tooltip = 'Labor Rate: $' + (field.val() || 0);
+        }
+        else if (calcMethodTitle == '$ / unit' && (field = $(this).find('input[name$=Multiplier]:not(:disabled)')).length) {            
+            tooltip = 'Multiplier: ' + field.val();
+        }
+        else {
+            field = $(this).find('input[name$=LaborRate]:not(:disabled)');
+            tooltip = field.length ? 'Labor Rate: $' + (field.val() || 0) : '';
+        }
+        $target.tooltip(tooltip ? { delay: { 'show': 500 }, title: tooltip } : 'destroy');
+    }
+
+    function matCostCalcChange(e) {
+        var fieldset = $('#materialCost_panel');
+        $('div[data-depends-on=materialCostCalcMethod]', fieldset).each(function () {
+            var hide = !$('#materialCostCalcMethod').is($(this).attr('data-show-when'));
+            $(this).toggleClass('hidden', hide).find('input').prop('disabled', hide).val(_resetInputCallback);
+        });
+        _tooltipRebind.call(fieldset.find('.panel-body'), fieldset.find('span[data-tooltip]'));
+    }
+
+    function laborCostCalcChange(e) {
+        var fieldset = $('#laborCost_panel');
+        var hourMult = kendo.parseFloat($('input[name=HourlyMultiplier]:not(:disabled)', fieldset).val() || 1);
+
+        $('div[data-depends-on=laborCostCalcMethod]', fieldset).each(function () {
+            var hide = !$('#laborCostCalcMethod').is($(this).attr('data-show-when'));
+            $(this).toggleClass('hidden', hide).find('input').prop('disabled', hide).val(_resetInputCallback);
+        });
+
+        if ($('#laborCostCalcMethod').val() == 2) {
+            $('#LaborCostPerUnit', fieldset).val(function (i, cur) {
+                return cur === '' ? kendo.toString(hourMult * kendo.parseFloat($('input[name=LaborRate]', fieldset).val() || 1), '0.00') : cur;
+            });
+        }
+
+        _tooltipRebind.call(fieldset.find('.panel-body'), fieldset.find('span[data-tooltip]'));
+    }
+
+    function subcontrCostCalcChange(e) {
+        var fieldset = $('#subcontractorCost_panel');
+        $('div[data-depends-on=subcontractorCostCalcMethod]', fieldset).each(function () {
+            var hide = !$('#subcontractorCostCalcMethod').is($(this).attr('data-show-when'));
+            $(this).toggleClass('hidden', hide).find('input:text').prop('disabled', hide).val(_resetInputCallback);
+        });
+
+        _tooltipRebind.call(fieldset.find('.panel-body'), fieldset.find('span[data-tooltip]'));
+    }
+
+    function markupCheckboxChange(e) {
+        var fieldset = $(this).closest('.dropdown-menu'),
+            inputGrp = $('.input-group', fieldset),
+            checked = $(this).prop('checked'),
+            input = $('input', inputGrp);
+        if (checked)
+            input.val($('#' + input.attr('data-project-value-field')).val()).trigger('change');
+
+        input.prop('disabled', checked);
+        inputGrp.toggleClass('k-state-disabled', checked);
+        
+        fieldset.closest('.dropdown').find('.dropdown-toggle').find('.ce-badge').toggleClass('hidden', checked).end()
+            .find('.ce-dropdown-select').toggleClass('hidden', !checked);
+    }
+
+    function inputMarkupChange(e) {
+        var input = $(this),
+            markup = kendo.parseFloat(input.val() || 0);
+
+        input.closest('div.dropdown')
+            .find('span.bg-markup').toggleClass('markup-pos', markup > 0).toggleClass('markup-neg', markup < 0)
+            .find('span[data-field="' + input.attr('id') + '"]').text(kendo.toString(markup, "0.# \\\%"));
+    }
+
+    function _calcMaterialCost(form) {
+        var unitType = $('input[name=PartTypeId]:checked', form).val();
+        var quantity = kendo.parseFloat($('input[name=Qty]', form).val());
+
+        if (unitType == @PartTypeEnum.Pound.ToString("d"))
+            return quantity;
+        if (unitType == @PartTypeEnum.Hour.ToString("d") ||
+            $('#materialCostCheckbox', form).is(':checked') == false)
+            return 0;
+
+        var unitCost = kendo.parseFloat($('input[name=UnitCost]:not(:disabled)', form).val());
+        var multiply = kendo.parseFloat($('input[name=MaterialMultiplier]:not(:disabled)', form).val() || 1);
+
+        return unitCost * multiply * ($('#materialCostCalcMethod', form).val() == "2" ? 1 : quantity);
+    }
+
+
+    function _calcLaborCost(form) {
+        var unitType = $('input[name=PartTypeId]:checked', form).val();
+
+        if (unitType == @PartTypeEnum.Pound.ToString("d") ||
+            $('#laborCostCheckbox', form).is(':checked') == false)
+            return 0;
+
+        var laborRate = kendo.parseFloat($('input[name=LaborRate]:not(:disabled)', form).val() || 1);
+        var quantity = kendo.parseFloat($('input[name=Qty]', form).val());
+
+        if (unitType == @PartTypeEnum.Hour.ToString("d"))
+            return quantity * laborRate;
+
+        var method = $('#laborCostCalcMethod', form).val();
+        var hourMult = kendo.parseFloat($('input[name=HourlyMultiplier]:not(:disabled)', form).val() || 1);
+        var laborCost = kendo.parseFloat($('input[name=LaborCostPerUnit]:not(:disabled)', form).val() || 0);
+
+        laborCost = method == 3 ? laborCost : hourMult * (laborCost || laborRate);
+
+        return laborCost * (method == 3 || method == 4 ? 1 : quantity);
+    }
+
+
+    function _calcLaborHours(form) {
+        if ($('#laborCostCheckbox', form).is(':checked') == false)
+            return 0;
+
+        var unitType = $('input[name=PartTypeId]:checked', form).val();
+        var quantity = kendo.parseFloat($('input[name=Qty]', form).val());
+        if (unitType == @PartTypeEnum.Hour.ToString("d"))
+            return quantity;
+
+        var hourMult = kendo.parseFloat($('input[name=HourlyMultiplier]:not(:disabled)', form).val() || 1);
+        var laborRate = kendo.parseFloat($('input[name=LaborRate]', form).val());
+        var laborCost = kendo.parseFloat($('input[name=LaborCostPerUnit]:not(:disabled)', form).val() || 0);
+        var method = $('#laborCostCalcMethod', form).val();
+
+        if (method == 2 || method == 3)
+            hourMult = laborRate ? laborCost / laborRate : 0;
+
+        return hourMult * (method >= 3 ? 1 : quantity);
+    }
+
+    function _calcSubcntrCost(form) {
+        var unitType = $('input[name=PartTypeId]:checked', form).val();
+        if (unitType >= 5 ||
+            $('#subcontractorCostCheckbox', form).is(':checked') == false)
+            return 0;
+        var method = $('#subcontractorCostCalcMethod', form).val();
+        var subcCost = kendo.parseFloat($('input[name=SubcontractorCost]:not(:disabled)', form).val() || 0);
+        var multiply = method == 3 ? 1 : kendo.parseFloat($('input[name=SubcontractorMultiplier]:not(:disabled)', form).val());
+        var quantity = method == 3 ? 1 : kendo.parseFloat($('input[name=Qty]', form).val());
+
+        return subcCost * multiply * quantity;
+    }
+
+    function partCostCalcutation(formId) {
+        var form = $('#partAdjustEditForm');
+        var dest = $('#costPreviewGrid');
+
+        var unitType = $('input[name=PartTypeId]:checked', form).val(),
+            laborRate = kendo.parseFloat($('input[name=LaborRate]', form).val()),
+            qty = kendo.parseFloat($('input[name=Qty]', form).val());
+
+        var materialCostCalculated = _calcMaterialCost(form),
+            laborCostCalculated = _calcLaborCost(form),
+            subcontractorCostCalculated = _calcSubcntrCost(form);
+
+        var materCost = function () {
+            return unitType == @PartTypeEnum.Hour.ToString("d") ? 0 : unitType == @PartTypeEnum.Pound.ToString("d") ? 1 : (qty != 0 ? materialCostCalculated / qty : 0);
+        }
+
+        var laborCost = function () {
+            return unitType == @PartTypeEnum.Pound.ToString("d") ? 0 : unitType == @PartTypeEnum.Hour.ToString("d") ? laborRate : (qty != 0 ? laborCostCalculated / qty : 0);
+        }
+
+        var subcontrCost = function () {
+            return unitType >= 5 ? 0 : qty != 0 ? subcontractorCostCalculated / qty : 0;
+        }
+
+        var totalCost = function () {
+            return materCost() + laborCost() + subcontrCost();
+        }
+
+        var laborHours = function () {
+            return unitType == @PartTypeEnum.Pound.ToString("d") ? 0 : unitType == @PartTypeEnum.Hour.ToString("d") ? qty : _calcLaborHours(form);
+        }
+
+        var _totalMarkup = (materialCostCalculated * kendo.parseFloat($('input[name="Markup.Material"]', form).val() || 0)
+            + laborCostCalculated * kendo.parseFloat($('input[name="Markup.Labor"]', form).val() || 0)
+            + subcontractorCostCalculated * kendo.parseFloat($('input[name="Markup.Subcontractor"]', form).val() || 0)
+        )/100;
+
+        var totalMarkup = function () {
+            return _totalMarkup;
+        };
+
+        var markup = qty != 0 ? totalMarkup() / qty : 0,
+            baseBid = totalCost() + markup;
+
+        var total_material = function () {
+            return unitType == @PartTypeEnum.Pound.ToString("d") ? qty : materialCostCalculated;
+        },
+            total_labor = function () {
+                return laborCostCalculated;
+            },
+            total_subcontr = function () {
+                return subcontractorCostCalculated;
+            },
+            total_baseBid = function () {
+                return total_material() + total_labor() + total_subcontr() + totalMarkup();
+            };
+
+
+        $('span[data-field=UnitCost]', dest).text(kendo.format('{0:c}', materCost()));
+        $('span[data-field=LaborCost]', dest).text(kendo.format('{0:c}', laborCost()));
+        $('span[data-field=SubcontractorCost]', dest).text(kendo.format('{0:c}', subcontrCost()));
+        $('span[data-field=TotalCost]', dest).text(kendo.format('{0:c}', totalCost()));
+        $('span[data-field=Markup]', dest).text(kendo.format('{0:c}', markup));
+        $('span[data-field=BaseBid]', dest).text(kendo.format('{0:c}', baseBid));
+
+        $('td[data-field=Total_Material]', dest).text(kendo.format('{0:c}', total_material()));
+        $('td[data-field=Total_Labor]', dest).text(kendo.format('{0:c}', total_labor()));
+        $('td[data-field=Total_Subcontractor]', dest).text(kendo.format('{0:c}', total_subcontr()));
+        $('td[data-field=Total_TotalCost]', dest).text(kendo.format('{0:c}', total_material() + total_labor() + total_subcontr()));
+        $('td[data-field=Total_Markup]', dest).text(kendo.format('{0:c}', totalMarkup()));
+        $('td[data-field=Total_BaseBid]', dest).text(kendo.format('{0:c}', total_baseBid()));
+
+        //var totalsGrid = $('#totalsPreviewGrid');
+        $('td[data-field=Qty]', dest).text(kendo.format('{0:n2}', qty));
+        $('td[data-field=LaborHours]', dest).text(kendo.format('{0:n}', laborHours()));
+        $('td[data-field=CostPerUnit]', dest).text(kendo.format('{0:c}',  totalCost()));
+    }
+
+    function partEdit_categorySelected() {
+
+        var scope = $(this).closest('ul.dropdown-menu'),
+            dependentSelect = $('select[data-depends-on=' + $(this).prop('id') + ']', scope),
+            selectedValue = $(this).val();
+
+        var dataSource = $(this).is('[data-depends-on]') ? $('#' + $(this).attr('data-depends-on')).data('categoryList') : $(this).data('categoryList');
+        if (!dataSource)
+            console.error("data('categoryList') not defined");
+
+        if (dataSource && selectedValue) {
+
+            dependentSelect.empty()//prop('disabled', false);
+            $.each($.grep(dataSource, (e) => e.parent_id == selectedValue), (i, value) => {
+                $('<option />', { 'text': value.title, 'value': value.id, 'selected': value.is_default }).appendTo(dependentSelect);
+            });
+
+            if (dependentSelect.is(':empty'))
+                $('<option />').appendTo(dependentSelect);
+        }
+        //else
+        
+        dependentSelect.trigger('change');
+        //another depending select
+        //$('select[data-depends-on=' + dependentSelect.prop('id') + ']', scope).prop('disabled', true);
+    }
+
+    function submitPartDirectoryClick(e) {
+        e.preventDefault();
+        var btn = $(this), scope = btn.closest('ul.dropdown-menu[data-scope=categoryData]');
+
+        scope.toggleClass('k-state-disabled', true);
+
+        $.post('@(Url.Action("PartCategoryEdit", "Parts"))',
+            {
+                partId: $('#OriginalPartId').val(),
+                categoryId: $('#partEdit_Category_Id', scope).val(),
+                subcategoryId: $('#partEdit_SubCategory_Id', scope).val(),
+                groupId: $('#partEdit_Group_Id', scope).val()
+            },
+            function (data, status) {
+                scope.toggleClass('k-state-disabled', false);
+                if (data['success']) {
+                    var newCatId = data['data'] && data['data'].categories.length ? data['data'].categories[0].id : $('#partEdit_Category_Id', scope).val(),
+                        newSubId = data['data'] && data['data'].categories.length ? data['data'].categories[1].id : $('#partEdit_SubCategory_Id', scope).val(),
+                        newGrpId = data['data'] && data['data'].categories.length ? data['data'].categories[2].id : $('#partEdit_Group_Id', scope).val();
+                    @*Update IDs*@
+                    $('#part_CategoryId', scope).val(newCatId);
+                    $('#part_SubCategoryId', scope).val(newSubId);
+                    $('#part_GroupId', scope).val(newGrpId);
+                    //console.log(newCatId, newSubId, newGrpId);
+                    @*Update Titles*@
+                    $('[data-field=CategoryTitle]', scope).text($('#partEdit_Category_Id > option:selected', scope).text());
+                    $('[data-field=SubCategoryTitle]', scope).text($('#partEdit_SubCategory_Id > option:selected', scope).text());
+                    $('[data-field=GroupTitle]', scope).text($('#partEdit_Group_Id > option:selected', scope).text());
+
+                    btn.parent().find('a[data-action=cancel]').trigger('click');
+
+                    setDataModified(scope.closest('form'));
+                }
+                else
+                    alert("Failed to change part category:\nStatus: " + status);
+            }).fail(function () {
+                alert("Failed to change part category. Please retry");
+                scope.toggleClass('k-state-disabled', false);
+            });
+    }
+
+    function setDataModified($element) {
+        $element.data('has-data-modified', true);
+    }
+</script>
